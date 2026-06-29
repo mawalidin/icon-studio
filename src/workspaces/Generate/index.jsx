@@ -178,8 +178,9 @@ export default function Generate() {
   const [error,    setError]    = useState(null);
   const [variants, setVariants] = useState([]);
   const [selected, setSelected] = useState(null);
-  const [copied,   setCopied]   = useState(false);
-  const [saving,   setSaving]   = useState(false); // "save panel open"
+  const [copied,       setCopied]       = useState(false);
+  const [copiedFigma,  setCopiedFigma]  = useState(false);
+  const [saving,       setSaving]       = useState(false); // "save panel open"
 
   const brand = useMemo(
     () => brands.find((b) => b.id === brandId) ?? brands[0],
@@ -280,6 +281,13 @@ export default function Generate() {
     navigator.clipboard?.writeText(bakeColor(selected, brand.primary));
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  }
+
+  function copyForFigma() {
+    if (!selected) return;
+    navigator.clipboard?.writeText(selected); // currentColor — Figma accepts SVG text on Ctrl+V
+    setCopiedFigma(true);
+    setTimeout(() => setCopiedFigma(false), 1800);
   }
 
   // ── Render ─────────────────────────────────────────────────────────────
@@ -515,6 +523,26 @@ export default function Generate() {
                           className="w-full text-sm font-medium py-2 rounded-lg border border-stone-200 hover:bg-stone-50 transition"
                         >
                           {copied ? "Copied ✓" : "Copy SVG code"}
+                        </button>
+                        <button
+                          onClick={copyForFigma}
+                          className="w-full flex items-center justify-center gap-1.5 text-sm font-medium py-2 rounded-lg border border-stone-200 hover:bg-stone-50 transition"
+                        >
+                          {copiedFigma ? (
+                            <>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                              Copied — paste into Figma
+                            </>
+                          ) : (
+                            <>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                              </svg>
+                              Copy for Figma
+                            </>
+                          )}
                         </button>
                       </div>
 

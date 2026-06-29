@@ -123,6 +123,7 @@ function DetailPanel({ icon, viewColor, onClose, onUpdate, onDelete, onAnimate }
   const [availDirty, setAvailDirty] = useState(false);
   const [saving, setSaving]       = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
+  const [copied, setCopied]       = useState(false);
 
   useEffect(() => {
     setName(icon.name);
@@ -304,8 +305,33 @@ function DetailPanel({ icon, viewColor, onClose, onUpdate, onDelete, onAnimate }
           {/* Actions */}
           <div className="space-y-2 pb-2">
             <button
-              onClick={onAnimate}
+              onClick={() => {
+                if (!icon.svg) return;
+                navigator.clipboard?.writeText(icon.svg);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1800);
+              }}
               className="w-full flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-lg bg-stone-900 text-white hover:bg-stone-800 transition"
+            >
+              {copied ? (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Copied — paste into Figma
+                </>
+              ) : (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  Copy SVG
+                </>
+              )}
+            </button>
+            <button
+              onClick={onAnimate}
+              className="w-full flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-lg border border-stone-200 text-stone-700 hover:border-stone-300 hover:bg-stone-50 transition"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="9" /><path d="m10 8 6 4-6 4V8Z" fill="currentColor" stroke="none" />
