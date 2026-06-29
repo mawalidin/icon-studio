@@ -1,11 +1,14 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { BRANDS, ALL_BRAND_IDS } from "@/lib/brands.js";
-import { sizedSvg } from "@/lib/svgHelpers.js";
+import { sizedSvg, bakeColor, rasterize, downloadBlob, slugify } from "@/lib/svgHelpers.js";
+import JSZip from "jszip";
 import { supabase, isConfigured } from "@/lib/supabase.js";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const NEUTRAL_COLOR = "#78716C"; // stone-500, used when no brand selected for preview
+
+const EXPORT_SIZES = [24, 50, 100, 150, 200, 250, 500];
 
 const STYLE_OPTS   = ["line", "filled", "duotone"];
 const SOURCE_OPTS  = ["generated", "uploaded", "imported"];
@@ -123,7 +126,74 @@ function DetailPanel({ icon, viewColor, onClose, onUpdate, onDelete, onAnimate }
   const [availDirty, setAvailDirty] = useState(false);
   const [saving, setSaving]       = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
-  const [copied, setCopied]       = useState(false);
+  const [copied, setCopied]         = useState(false);
+  const [exportSizes, setExportSizes] = useState(EXPORT_SIZES);
+  const [exporting, setExporting]   = useState(null); // null | 'svg' | 'png' | 'zip'
+
+  const slug = slugify(icon.name);
+
+  function toggleSize(px) {
+    setExportSizes((prev) =>
+      prev.includes(px) ? prev.filter((s) => s !== px) : [...prev, px].sort((a, b) => a - b)
+    );
+  }
+
+  async function handleExport(format) {
+    if (!exportSizes.length || !icon.svg) return;
+    setExporting(format);
+    const color = viewColor === NEUTRAL_COLOR ? "#1c1917" : viewColor;
+    try {
+      if (format === "svg") {
+        if (exportSizes.length === 1) {
+          const px = exportSizes[0];
+          const content = bakeColor(sizedSvg(icon.svg, px), color);
+          downloadBlob(new Blob([content], { type: "image/svg+xml" }), `${slug}-${px}.svg`);
+        } else {
+          const zip = new JSZip();
+          exportSizes.forEach((px) => {
+            zip.file(`${slug}-${px}.svg`, bakeColor(sizedSvg(icon.svg, px), color));
+          });
+          downloadBlob(await zip.generateAsync({ type: "blob" }), `${slug}-svg.zip`);
+        }
+      }
+
+      if (format === "png") {
+        if (exportSizes.length === 1) {
+          const dataUrl = await rasterize(icon.svg, color, exportSizes[0]);
+          const blob = await (await fetch(dataUrl)).blob();
+          downloadBlob(blob, `${slug}-${exportSizes[0]}.png`);
+        } else {
+          const zip = new JSZip();
+          await Promise.all(
+            exportSizes.map(async (px) => {
+              const dataUrl = await rasterize(icon.svg, color, px);
+              zip.file(`${slug}-${px}.png`, await (await fetch(dataUrl)).arrayBuffer());
+            })
+          );
+          downloadBlob(await zip.generateAsync({ type: "blob" }), `${slug}-png.zip`);
+        }
+      }
+
+      if (format === "zip") {
+        const zip = new JSZip();
+        const svgFolder = zip.folder("svg");
+        const pngFolder = zip.folder("png");
+        exportSizes.forEach((px) => {
+          svgFolder.file(`${slug}-${px}.svg`, bakeColor(sizedSvg(icon.svg, px), color));
+        });
+        await Promise.all(
+          exportSizes.map(async (px) => {
+            const dataUrl = await rasterize(icon.svg, color, px);
+            pngFolder.file(`${slug}-${px}.png`, await (await fetch(dataUrl)).arrayBuffer());
+          })
+        );
+        downloadBlob(await zip.generateAsync({ type: "blob" }), `${slug}-export.zip`);
+      }
+    } catch (err) {
+      console.error("Export failed", err);
+    }
+    setExporting(null);
+  }
 
   useEffect(() => {
     setName(icon.name);
@@ -300,6 +370,85 @@ function DetailPanel({ icon, viewColor, onClose, onUpdate, onDelete, onAnimate }
                 <span className="text-xs text-stone-700" style={mono}>{value}</span>
               </div>
             ))}
+          </div>
+
+          {/* Export */}
+          <div className="space-y-3">
+            <p className="text-xs font-medium text-stone-500 uppercase tracking-wide">Export</p>
+
+            {/* Size toggles */}
+            <div className="flex flex-wrap gap-1">
+              {EXPORT_SIZES.map((px) => (
+                <button
+                  key={px}
+                  onClick={() => toggleSize(px)}
+                  className={
+                    "text-xs px-2 py-1 rounded-md border transition " +
+                    (exportSizes.includes(px)
+                      ? "bg-stone-900 text-white border-stone-900"
+                      : "bg-white text-stone-400 border-stone-200 hover:border-stone-400 hover:text-stone-600")
+                  }
+                >
+                  {px}
+                </button>
+              ))}
+              <button
+                onClick={() =>
+                  setExportSizes(
+                    exportSizes.length === EXPORT_SIZES.length ? [] : EXPORT_SIZES
+                  )
+                }
+                className="text-xs px-2 py-1 rounded-md border border-stone-200 text-stone-400 hover:border-stone-400 hover:text-stone-600 transition"
+              >
+                {exportSizes.length === EXPORT_SIZES.length ? "None" : "All"}
+              </button>
+            </div>
+
+            {/* SVG + PNG row */}
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { format: "svg", label: "SVG" },
+                { format: "png", label: "PNG" },
+              ].map(({ format, label }) => (
+                <button
+                  key={format}
+                  onClick={() => handleExport(format)}
+                  disabled={!exportSizes.length || !!exporting}
+                  className="flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg border border-stone-200 hover:border-stone-300 hover:bg-stone-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {exporting === format ? (
+                    "Exporting…"
+                  ) : (
+                    <>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                      {exportSizes.length === 1
+                        ? `${label} · ${exportSizes[0]}px`
+                        : `${label} · ${exportSizes.length} sizes`}
+                    </>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* ZIP (all sizes, both formats) */}
+            <button
+              onClick={() => handleExport("zip")}
+              disabled={!exportSizes.length || !!exporting}
+              className="w-full flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg border border-stone-200 hover:border-stone-300 hover:bg-stone-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {exporting === "zip" ? (
+                "Zipping…"
+              ) : (
+                <>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  SVG + PNG · all {exportSizes.length} sizes · ZIP
+                </>
+              )}
+            </button>
           </div>
 
           {/* Actions */}
