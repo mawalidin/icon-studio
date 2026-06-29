@@ -28,14 +28,12 @@ figma.ui.onmessage = async (msg) => {
       return;
     }
     try {
-      const bytes = await node.exportAsync({
-        format: "SVG",
-        svgOutlineText: false, // keep text as <text> elements
-        svgIdAttribute: false, // omit id="" clutter
-      });
+      const bytes = await node.exportAsync({ format: "SVG" });
+      // Pass raw bytes as a plain array — TextDecoder is unavailable in the
+      // Figma sandbox; decoding happens in the UI iframe instead.
       figma.ui.postMessage({
         type: "export-done",
-        svg: new TextDecoder().decode(bytes),
+        bytes: Array.from(bytes),
         name: node.name,
       });
     } catch (err) {

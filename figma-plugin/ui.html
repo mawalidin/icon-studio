@@ -832,10 +832,11 @@ window.onmessage = (e) => {
     return;
   }
 
-  // Add tab: export done
+  // Add tab: export done — bytes decoded here (TextDecoder unavailable in sandbox)
   if (msg.type === "export-done") {
-    add.rawSvg       = msg.svg;
-    add.processedSvg = processRawSvg(msg.svg, add.forceCC);
+    const raw        = new TextDecoder().decode(new Uint8Array(msg.bytes));
+    add.rawSvg       = raw;
+    add.processedSvg = processRawSvg(raw, add.forceCC);
     add.formName     = msg.name || "";
     add.formStyle    = guessStyle(add.processedSvg);
     add.formBrands   = [...ALL_BRANDS];
@@ -844,10 +845,18 @@ window.onmessage = (e) => {
     return;
   }
 
-  // Add tab: export error
+  // Add tab: export error — show the message instead of silently resetting
   if (msg.type === "export-error") {
     add.phase = "select";
     renderAdd();
+    // Inject error banner below the selection card
+    const banner = document.createElement("div");
+    banner.className = "warn-box";
+    banner.style.background = "#fef2f2";
+    banner.style.borderColor = "#fca5a5";
+    banner.style.color = "#991b1b";
+    banner.textContent = "Export failed: " + (msg.error || "unknown error");
+    $addContent.appendChild(banner);
     return;
   }
 };
