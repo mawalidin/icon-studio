@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Icon Studio</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,192 +17,259 @@
     overflow: hidden;
   }
 
-  /* ── Header ─────────────────────────────────────── */
-  .header {
+  /* ── Tab bar ─────────────────────────────────────── */
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid #e7e5e4;
+    background: #fff;
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1;
+    padding: 9px 8px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    font-size: 11px;
+    font-weight: 500;
+    color: #a8a29e;
+    cursor: pointer;
+    transition: color 0.1s, border-color 0.1s;
+    letter-spacing: 0.01em;
+  }
+  .tab:hover { color: #1c1917; }
+  .tab.active { color: #1c1917; border-bottom-color: #1c1917; }
+
+  /* ── Panel container ─────────────────────────────── */
+  .panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+
+  /* ── Browse: header ──────────────────────────────── */
+  .browse-header {
     padding: 10px 12px 8px;
-    background: #ffffff;
+    background: #fff;
     border-bottom: 1px solid #e7e5e4;
     flex-shrink: 0;
   }
-
   .search-wrap { position: relative; }
   .search-icon {
-    position: absolute;
-    left: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #a8a29e;
-    pointer-events: none;
+    position: absolute; left: 8px; top: 50%;
+    transform: translateY(-50%); color: #a8a29e; pointer-events: none;
   }
   .search {
-    width: 100%;
-    height: 30px;
-    padding: 0 8px 0 28px;
-    border: 1px solid #d6d3d1;
-    border-radius: 6px;
-    font-size: 12px;
-    background: #fafaf9;
-    color: #1c1917;
-    outline: none;
+    width: 100%; height: 30px; padding: 0 8px 0 28px;
+    border: 1px solid #d6d3d1; border-radius: 6px;
+    font-size: 12px; background: #fafaf9; color: #1c1917; outline: none;
     transition: border-color 0.1s, background 0.1s;
   }
   .search::placeholder { color: #a8a29e; }
-  .search:focus { border-color: #1c1917; background: #ffffff; }
-
+  .search:focus { border-color: #1c1917; background: #fff; }
   .filter-row { display: flex; gap: 4px; margin-top: 7px; flex-wrap: wrap; }
+  .divider-v { width: 1px; background: #e7e5e4; margin: 2px 1px 0; align-self: stretch; flex-shrink: 0; }
 
+  /* ── Pills ───────────────────────────────────────── */
   .pill {
-    padding: 2px 9px;
-    border-radius: 999px;
-    border: 1px solid #d6d3d1;
-    font-size: 11px;
-    font-weight: 500;
-    cursor: pointer;
-    background: #ffffff;
-    color: #78716c;
-    transition: all 0.1s;
-    line-height: 18px;
-    white-space: nowrap;
+    padding: 2px 9px; border-radius: 999px; border: 1px solid #d6d3d1;
+    font-size: 11px; font-weight: 500; cursor: pointer; background: #fff; color: #78716c;
+    transition: all 0.1s; line-height: 18px; white-space: nowrap;
   }
   .pill:hover { border-color: #a8a29e; color: #1c1917; }
-  .pill.active { background: #1c1917; border-color: #1c1917; color: #ffffff; }
-  .pill[data-brand="reddoorz"].active { background: #E63946; border-color: #E63946; }
-  .pill[data-brand="sans"].active     { background: #1D2A3A; border-color: #1D2A3A; }
+  .pill.active { background: #1c1917; border-color: #1c1917; color: #fff; }
+  .pill[data-brand="reddoorz"].active  { background: #E63946; border-color: #E63946; }
+  .pill[data-brand="sans"].active      { background: #1D2A3A; border-color: #1D2A3A; }
   .pill[data-brand="urbanview"].active { background: #2E7D6B; border-color: #2E7D6B; }
-  .pill[data-brand="lavana"].active   { background: #1B2A4A; border-color: #1B2A4A; }
+  .pill[data-brand="lavana"].active    { background: #1B2A4A; border-color: #1B2A4A; }
 
-  .divider { width: 1px; height: 18px; background: #e7e5e4; margin: 2px 2px 0; align-self: center; flex-shrink: 0; }
-
-  /* ── Grid ───────────────────────────────────────── */
-  .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1px;
-    background: #e7e5e4;
-  }
-
+  /* ── Browse: grid ────────────────────────────────── */
+  .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; }
+  .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: #e7e5e4; }
   .icon-cell {
-    background: #fafaf9;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: 10px 4px 7px;
-    cursor: pointer;
-    transition: background 0.1s;
-    user-select: none;
+    background: #fafaf9; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px; padding: 10px 4px 7px; cursor: pointer; transition: background 0.1s; user-select: none;
   }
   .icon-cell:hover { background: #f5f5f4; }
-  .icon-cell.selected { background: #e7e5e4; }
-
-  .icon-svg {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
+  .icon-cell.selected { background: #e7e5e4; outline: 2px solid #1c1917; outline-offset: -2px; }
+  .icon-svg { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
   .icon-svg svg { display: block; }
-
   .icon-name {
-    font-size: 9px;
-    color: #78716c;
-    text-align: center;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    width: 100%;
-    padding: 0 2px;
-    line-height: 1.3;
+    font-size: 9px; color: #78716c; text-align: center;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    width: 100%; padding: 0 2px;
   }
-  .icon-cell.selected .icon-name { color: #44403c; }
 
-  /* ── States ─────────────────────────────────────── */
+  /* ── State box (loading / empty / error) ─────────── */
   .state-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 40px 24px;
-    color: #a8a29e;
-    text-align: center;
-    min-height: 160px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; padding: 36px 20px; color: #a8a29e; text-align: center;
   }
   .state-box svg { color: #d6d3d1; }
 
-  /* ── Footer ─────────────────────────────────────── */
-  .footer {
-    padding: 10px 12px;
-    background: #ffffff;
-    border-top: 1px solid #e7e5e4;
-    flex-shrink: 0;
-  }
-
+  /* ── Browse: footer ──────────────────────────────── */
+  .count { font-size: 10px; color: #a8a29e; text-align: right; padding: 3px 10px; flex-shrink: 0; }
+  .browse-footer { padding: 10px 12px; background: #fff; border-top: 1px solid #e7e5e4; flex-shrink: 0; }
   .insert-btn {
-    width: 100%;
-    height: 32px;
-    border: none;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.1s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+    width: 100%; height: 32px; border: none; border-radius: 6px;
+    font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
   }
-  .insert-btn:not(:disabled) { background: #1c1917; color: #ffffff; }
+  .insert-btn:not(:disabled) { background: #1c1917; color: #fff; }
   .insert-btn:not(:disabled):hover { background: #292524; }
   .insert-btn:disabled { background: #f5f5f4; color: #a8a29e; cursor: default; border: 1px solid #e7e5e4; }
-  .insert-btn.done { background: #166534; }
-  .insert-btn.error { background: #991b1b; }
+  .insert-btn.done  { background: #166534 !important; color: #fff !important; }
+  .insert-btn.err   { background: #991b1b !important; color: #fff !important; }
 
-  /* count badge */
-  .count { font-size: 10px; color: #a8a29e; text-align: right; padding: 4px 10px 0; }
+  /* ── Add panel ───────────────────────────────────── */
+  .add-scroll { flex: 1; overflow-y: auto; padding: 12px; min-height: 0; }
+
+  /* Selection card */
+  .sel-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; padding: 36px 20px; color: #a8a29e; text-align: center;
+  }
+  .sel-empty svg { color: #d6d3d1; }
+
+  .sel-card {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 10px; background: #fff; border: 1px solid #e7e5e4; border-radius: 8px; margin-bottom: 12px;
+  }
+  .sel-card-icon { color: #a8a29e; flex-shrink: 0; }
+  .sel-card-body { flex: 1; min-width: 0; }
+  .sel-card-name { font-weight: 500; color: #1c1917; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sel-card-type { font-size: 10px; color: #a8a29e; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1px; }
+
+  /* Export button */
+  .export-btn {
+    width: 100%; height: 30px; border: 1px solid #d6d3d1; border-radius: 6px;
+    font-size: 12px; font-weight: 500; color: #1c1917; background: #fff; cursor: pointer;
+    transition: all 0.1s; display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .export-btn:hover { border-color: #1c1917; }
+
+  /* SVG preview box */
+  .svg-preview {
+    width: 72px; height: 72px; display: flex; align-items: center; justify-content: center;
+    background: #f5f5f4; border: 1px solid #e7e5e4; border-radius: 10px;
+    margin: 0 auto 14px; color: #1c1917; overflow: hidden;
+  }
+  .svg-preview svg { max-width: 48px; max-height: 48px; display: block; }
+
+  /* Form */
+  .form-section { margin-bottom: 13px; }
+  .form-label {
+    font-size: 10px; font-weight: 600; color: #78716c;
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; display: block;
+  }
+  .form-input {
+    width: 100%; height: 30px; padding: 0 10px;
+    border: 1px solid #d6d3d1; border-radius: 6px;
+    font-size: 12px; color: #1c1917; background: #fff; outline: none; transition: border-color 0.1s;
+  }
+  .form-input:focus { border-color: #1c1917; }
+
+  /* Style picker */
+  .style-row { display: flex; gap: 4px; }
+  .style-btn {
+    flex: 1; padding: 5px 4px; border: 1px solid #d6d3d1; border-radius: 6px;
+    font-size: 11px; font-weight: 500; color: #78716c; background: #fff;
+    cursor: pointer; text-align: center; transition: all 0.1s;
+  }
+  .style-btn:hover { border-color: #a8a29e; color: #1c1917; }
+  .style-btn.active { background: #1c1917; border-color: #1c1917; color: #fff; }
+
+  /* Brand pills in form */
+  .brand-row { display: flex; gap: 4px; flex-wrap: wrap; }
+  .brand-pill {
+    padding: 3px 9px; border-radius: 999px; border: 1px solid #d6d3d1;
+    font-size: 11px; font-weight: 500; cursor: pointer; background: #fff; color: #78716c;
+    transition: all 0.1s; user-select: none;
+  }
+  .brand-pill:hover { border-color: #a8a29e; }
+  .brand-pill.on[data-b="reddoorz"]  { background: #E63946; border-color: #E63946; color: #fff; }
+  .brand-pill.on[data-b="sans"]      { background: #1D2A3A; border-color: #1D2A3A; color: #fff; }
+  .brand-pill.on[data-b="urbanview"] { background: #2E7D6B; border-color: #2E7D6B; color: #fff; }
+  .brand-pill.on[data-b="lavana"]    { background: #1B2A4A; border-color: #1B2A4A; color: #fff; }
+
+  /* currentColor toggle */
+  .toggle-row { display: flex; align-items: center; gap: 7px; cursor: pointer; user-select: none; }
+  .toggle-row input { width: 13px; height: 13px; accent-color: #1c1917; cursor: pointer; }
+  .toggle-row span { color: #44403c; }
+
+  /* Divider */
+  .rule { border: none; border-top: 1px solid #f0efee; margin: 12px 0; }
+
+  /* Action buttons */
+  .save-btn {
+    width: 100%; height: 32px; border: none; border-radius: 6px;
+    font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px;
+  }
+  .save-btn.primary { background: #1c1917; color: #fff; }
+  .save-btn.primary:hover { background: #292524; }
+  .save-btn.primary:disabled { background: #d6d3d1; color: #a8a29e; cursor: default; }
+  .save-btn.outline { background: #fff; color: #78716c; border: 1px solid #d6d3d1; margin-top: 6px; }
+  .save-btn.outline:hover { border-color: #a8a29e; color: #1c1917; }
+  .save-btn.success { background: #166534; color: #fff; }
+
+  /* Warning */
+  .warn-box {
+    background: #fef9c3; border: 1px solid #fde047; border-radius: 6px;
+    padding: 7px 10px; font-size: 11px; color: #713f12; margin-bottom: 10px; line-height: 1.5;
+  }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="search-wrap">
-    <span class="search-icon">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-    </span>
-    <input id="search" class="search" type="text" placeholder="Search icons…" autocomplete="off" spellcheck="false">
+<!-- ── Tab bar ──────────────────────────────────────────────────────────── -->
+<div class="tab-bar">
+  <button class="tab active" data-tab="browse">Browse</button>
+  <button class="tab" data-tab="add">Add to Library</button>
+</div>
+
+<!-- ── Browse panel ─────────────────────────────────────────────────────── -->
+<div id="browsePanel" class="panel">
+  <div class="browse-header">
+    <div class="search-wrap">
+      <span class="search-icon">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
+      <input id="search" class="search" type="text" placeholder="Search icons…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="filter-row" id="filterRow">
+      <button class="pill active" data-brand="">All</button>
+      <button class="pill" data-brand="reddoorz">RedDoorz</button>
+      <button class="pill" data-brand="sans">SANS</button>
+      <button class="pill" data-brand="urbanview">Urbanview</button>
+      <button class="pill" data-brand="lavana">Lavana</button>
+      <span class="divider-v"></span>
+      <button class="pill active" data-style="">All</button>
+      <button class="pill" data-style="line">Line</button>
+      <button class="pill" data-style="filled">Filled</button>
+      <button class="pill" data-style="duotone">Duotone</button>
+    </div>
   </div>
 
-  <div class="filter-row" id="brandRow">
-    <button class="pill active" data-brand="">All</button>
-    <button class="pill" data-brand="reddoorz">RedDoorz</button>
-    <button class="pill" data-brand="sans">SANS</button>
-    <button class="pill" data-brand="urbanview">Urbanview</button>
-    <button class="pill" data-brand="lavana">Lavana</button>
-    <span class="divider"></span>
-    <button class="pill active" data-style="">All</button>
-    <button class="pill" data-style="line">Line</button>
-    <button class="pill" data-style="filled">Filled</button>
-    <button class="pill" data-style="duotone">Duotone</button>
+  <div class="scroll" id="scroll">
+    <div id="grid" class="grid"></div>
+    <div id="stateBox" class="state-box" style="display:none"></div>
+  </div>
+  <div id="count" class="count" style="display:none"></div>
+
+  <div class="browse-footer">
+    <button id="insertBtn" class="insert-btn" disabled>Select an icon to insert</button>
   </div>
 </div>
 
-<div class="scroll" id="scroll">
-  <div id="grid" class="grid"></div>
-  <div id="stateBox" class="state-box" style="display:none"></div>
-</div>
-<div id="count" class="count" style="display:none"></div>
-
-<div class="footer">
-  <button id="insertBtn" class="insert-btn" disabled>Select an icon to insert</button>
+<!-- ── Add to Library panel ─────────────────────────────────────────────── -->
+<div id="addPanel" class="panel" style="display:none">
+  <div class="add-scroll" id="addScroll">
+    <div id="addContent"></div>
+  </div>
 </div>
 
 <script>
+/* ─── Config ───────────────────────────────────────────────────────────── */
 const SUPABASE_URL = "https://tvrnkdaclrkawgstxprw.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2cm5rZGFjbHJrYXdnc3R4cHJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTY1ODYsImV4cCI6MjA5ODI5MjU4Nn0._x3hsKmrO1GlN_AI-TKiYGUw8kMv2fBlL31yzpMkxg0";
 
@@ -213,45 +279,119 @@ const BRAND_COLORS = {
   urbanview: "#2E7D6B",
   lavana:    "#1B2A4A",
 };
-const PREVIEW_COLOR = "#78716c"; // neutral when no brand selected
+const ALL_BRANDS = ["reddoorz", "sans", "urbanview", "lavana"];
+const NEUTRAL = "#78716c";
 
-// ── State ────────────────────────────────────────────────────────────────────
-let state = {
+/* ─── SVG helpers (inlined from svgHelpers.js) ─────────────────────────── */
+function sanitizeSvg(svg) {
+  return svg
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, "")
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
+    .replace(/javascript:/gi, "")
+    .trim();
+}
+
+function normalizeImportedSvg(raw) {
+  const start = raw.indexOf("<svg");
+  const end   = raw.lastIndexOf("</svg>");
+  if (start === -1 || end === -1) return null;
+  let s = raw.slice(start, end + 6);
+  s = s.replace(/<svg([^>]*)>/i, (_, attrs) => {
+    let a = attrs;
+    const wm = a.match(/\swidth="([\d.]+)(?:px)?"/i);
+    const hm = a.match(/\sheight="([\d.]+)(?:px)?"/i);
+    a = a.replace(/\swidth="[^"]*"/i, "").replace(/\sheight="[^"]*"/i, "");
+    if (!/viewBox=/i.test(a))
+      a += wm && hm ? ` viewBox="0 0 ${wm[1]} ${hm[1]}"` : ' viewBox="0 0 24 24"';
+    return `<svg${a}>`;
+  });
+  return s;
+}
+
+function normalizeToGrid(svg) {
+  if (!svg) return svg;
+  const vb = svg.match(/viewBox\s*=\s*["']\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*["']/i);
+  if (!vb) return svg;
+  const [minX, minY, w, h] = [vb[1], vb[2], vb[3], vb[4]].map(Number);
+  if (w === 24 && h === 24) return svg;
+  if (w !== h || minX !== 0 || minY !== 0) return svg;
+  const scale = parseFloat((24 / w).toFixed(6));
+  const out = svg.replace(/viewBox\s*=\s*["'][^"']*["']/i, 'viewBox="0 0 24 24"');
+  const openEnd    = out.indexOf(">");
+  const closeStart = out.lastIndexOf("</svg>");
+  if (openEnd === -1 || closeStart === -1) return svg;
+  return out.slice(0, openEnd + 1) + `<g transform="scale(${scale})">` + out.slice(openEnd + 1, closeStart) + "</g></svg>";
+}
+
+function forceCurrentColor(svg) {
+  const keep = (v) => /^(none|currentcolor|transparent|inherit)$/i.test(v.trim());
+  return svg
+    .replace(/(fill|stroke)="([^"]*)"/gi, (m, p, v) => (keep(v) ? m : `${p}="currentColor"`))
+    .replace(/(fill|stroke)\s*:\s*([^;"'}\s]+)/gi, (m, p, v) => (keep(v) ? m : `${p}:currentColor`));
+}
+
+async function hashSvg(svg) {
+  const normalized = svg.replace(/\s+/g, " ").trim();
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(normalized));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function guessStyle(svg) {
+  const hasFill   = /fill\s*[:=]\s*["']?currentColor/i.test(svg);
+  const hasStroke = /stroke\s*[:=]\s*["']?currentColor/i.test(svg);
+  const hasDuo    = /opacity\s*[:=]\s*["']?0\.[12]/i.test(svg);
+  if (hasDuo && (hasStroke || hasFill)) return "duotone";
+  if (hasFill && !hasStroke) return "filled";
+  return "line";
+}
+
+function guessStroke(svg) {
+  const m = svg.match(/stroke-width\s*[:=]\s*["']?([\d.]+)/i);
+  return m ? parseFloat(m[1]) : 1.5;
+}
+
+function guessCorners(svg) {
+  return /stroke-linecap\s*[:=]\s*["']?square/i.test(svg) ? "sharp" : "rounded";
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/* ─── Browse state ─────────────────────────────────────────────────────── */
+const browse = {
   brand:    "",
   style:    "",
   search:   "",
   selected: null,
   icons:    [],
-  loading:  false,
 };
 
-// ── DOM refs ─────────────────────────────────────────────────────────────────
 const $grid      = document.getElementById("grid");
 const $stateBox  = document.getElementById("stateBox");
 const $count     = document.getElementById("count");
 const $insertBtn = document.getElementById("insertBtn");
 const $search    = document.getElementById("search");
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+function previewColor() {
+  return browse.brand ? BRAND_COLORS[browse.brand] : NEUTRAL;
+}
+
+function insertColor() {
+  return browse.brand ? BRAND_COLORS[browse.brand] : "#000000";
+}
+
 function bakeColor(svg, color) {
   return svg.replace(/currentColor/gi, color);
 }
 
-function previewColor() {
-  return state.brand ? BRAND_COLORS[state.brand] : PREVIEW_COLOR;
-}
-
-function insertColor() {
-  // Insert with brand color if selected; otherwise use black so Figma renders correctly
-  return state.brand ? BRAND_COLORS[state.brand] : "#000000";
-}
-
-// ── Fetch ────────────────────────────────────────────────────────────────────
-async function load() {
-  state.loading = true;
-  state.selected = null;
-  renderFooter();
-  showLoading();
+/* ─── Browse: fetch ────────────────────────────────────────────────────── */
+async function loadIcons() {
+  browse.selected = null;
+  renderInsertBtn();
+  showBrowseState("loading");
 
   try {
     const params = new URLSearchParams({
@@ -259,195 +399,461 @@ async function load() {
       order:  "name.asc",
       limit:  "500",
     });
-    if (state.search) params.set("name", `ilike.*${state.search}*`);
-    if (state.style)  params.set("style", `eq.${state.style}`);
-    if (state.brand)  params.set("brand_availability", `cs.{${state.brand}}`);
+    if (browse.search) params.set("name", `ilike.*${browse.search}*`);
+    if (browse.style)  params.set("style", `eq.${browse.style}`);
+    if (browse.brand)  params.set("brand_availability", `cs.{${browse.brand}}`);
 
     const res = await fetch(`${SUPABASE_URL}/rest/v1/icons?${params}`, {
-      headers: {
-        apikey:        SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-      },
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     });
+    if (!res.ok) throw new Error(`${res.status}`);
 
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    state.icons = await res.json();
-    state.loading = false;
+    browse.icons = await res.json();
     renderGrid();
   } catch (err) {
-    state.loading = false;
-    showError(err.message);
+    showBrowseState("error", err.message);
   }
 }
 
-// ── Render ───────────────────────────────────────────────────────────────────
+/* ─── Browse: render ───────────────────────────────────────────────────── */
 function renderGrid() {
-  if (!state.icons.length) {
-    $grid.innerHTML = "";
-    showEmpty();
-    return;
-  }
+  if (!browse.icons.length) { showBrowseState("empty"); return; }
 
-  hideState();
+  $stateBox.style.display  = "none";
+  $count.style.display     = "block";
+  $count.textContent       = `${browse.icons.length} icon${browse.icons.length !== 1 ? "s" : ""}`;
+
   const color = previewColor();
-  $grid.innerHTML = state.icons.map((icon) => `
-    <div class="icon-cell" data-id="${icon.id}" title="${escHtml(icon.name)}">
-      <div class="icon-svg" style="color:${color}">${icon.svg}</div>
-      <div class="icon-name">${escHtml(icon.name)}</div>
-    </div>
-  `).join("");
-
-  $count.style.display = "block";
-  $count.textContent = `${state.icons.length} icon${state.icons.length !== 1 ? "s" : ""}`;
+  $grid.innerHTML = browse.icons.map((icon) =>
+    `<div class="icon-cell" data-id="${icon.id}" title="${escHtml(icon.name)}">
+       <div class="icon-svg" style="color:${color}">${icon.svg}</div>
+       <div class="icon-name">${escHtml(icon.name)}</div>
+     </div>`
+  ).join("");
 }
 
-function renderFooter() {
-  const btn = $insertBtn;
-  if (state.selected) {
-    btn.disabled = false;
-    btn.className = "insert-btn";
-    btn.innerHTML = `
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
-      </svg>
-      Insert "${escHtml(state.selected.name)}"
-    `;
+function showBrowseState(type, detail) {
+  $grid.innerHTML       = "";
+  $count.style.display  = "none";
+  $stateBox.style.display = "flex";
+  if (type === "loading") {
+    $stateBox.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg><span>Loading…</span>`;
+  } else if (type === "empty") {
+    $stateBox.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>No icons found</span>`;
   } else {
-    btn.disabled = true;
-    btn.className = "insert-btn";
+    $stateBox.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Failed to load</span><span style="font-size:10px;color:#d6d3d1">${escHtml(detail || "")}</span>`;
+  }
+}
+
+function renderInsertBtn() {
+  const btn = $insertBtn;
+  if (browse.selected) {
+    btn.disabled   = false;
+    btn.className  = "insert-btn";
+    btn.innerHTML  = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>Insert "${escHtml(browse.selected.name)}"`;
+  } else {
+    btn.disabled   = true;
+    btn.className  = "insert-btn";
     btn.textContent = "Select an icon to insert";
   }
 }
 
-function showLoading() {
-  $grid.innerHTML = "";
-  $count.style.display = "none";
-  $stateBox.style.display = "flex";
-  $stateBox.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-    </svg>
-    <span>Loading…</span>
-  `;
-}
-
-function showEmpty() {
-  $count.style.display = "none";
-  $stateBox.style.display = "flex";
-  $stateBox.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-    <span>No icons found</span>
-  `;
-}
-
-function showError(msg) {
-  $grid.innerHTML = "";
-  $count.style.display = "none";
-  $stateBox.style.display = "flex";
-  $stateBox.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-    </svg>
-    <span>Failed to load</span>
-    <span style="font-size:10px;color:#d6d3d1">${escHtml(msg)}</span>
-  `;
-}
-
-function hideState() {
-  $stateBox.style.display = "none";
-}
-
-function escHtml(s) {
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
-
-// ── Events ───────────────────────────────────────────────────────────────────
-
-// Grid click (event delegation)
+/* ─── Browse: events ───────────────────────────────────────────────────── */
 $grid.addEventListener("click", (e) => {
   const cell = e.target.closest(".icon-cell");
   if (!cell) return;
-
   document.querySelectorAll(".icon-cell.selected").forEach((c) => c.classList.remove("selected"));
   cell.classList.add("selected");
-
-  const id = cell.dataset.id;
-  state.selected = state.icons.find((i) => i.id === id) ?? null;
-  renderFooter();
+  browse.selected = browse.icons.find((i) => i.id === cell.dataset.id) ?? null;
+  renderInsertBtn();
 });
 
-// Insert button
 $insertBtn.addEventListener("click", () => {
-  if (!state.selected) return;
-
-  const svg = bakeColor(state.selected.svg, insertColor());
-  parent.postMessage({ pluginMessage: { type: "insert-icon", svg, name: state.selected.name } }, "*");
+  if (!browse.selected) return;
+  parent.postMessage({
+    pluginMessage: {
+      type: "insert-icon",
+      svg:  bakeColor(browse.selected.svg, insertColor()),
+      name: browse.selected.name,
+    },
+  }, "*");
 });
 
-// Search (debounced)
 let searchTimer;
 $search.addEventListener("input", (e) => {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    state.search = e.target.value.trim();
-    load();
-  }, 280);
+  searchTimer = setTimeout(() => { browse.search = e.target.value.trim(); loadIcons(); }, 280);
 });
 
-// Brand filter
-document.getElementById("brandRow").addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-brand]");
-  if (btn) {
-    state.brand = btn.dataset.brand;
-    document.querySelectorAll("[data-brand]").forEach((b) =>
-      b.classList.toggle("active", b.dataset.brand === state.brand)
-    );
-    // Re-color grid icons without re-fetching
-    recolorGrid();
-    // Refetch for brand_availability filtering
-    load();
+document.getElementById("filterRow").addEventListener("click", (e) => {
+  const brandBtn = e.target.closest("[data-brand]");
+  if (brandBtn) {
+    browse.brand = brandBtn.dataset.brand;
+    document.querySelectorAll("[data-brand]").forEach((b) => b.classList.toggle("active", b.dataset.brand === browse.brand));
+    // Re-color existing cells immediately without refetch
+    const color = previewColor();
+    document.querySelectorAll(".icon-svg").forEach((el) => { el.style.color = color; });
+    loadIcons();
+    return;
+  }
+  const styleBtn = e.target.closest("[data-style]");
+  if (styleBtn) {
+    browse.style = styleBtn.dataset.style;
+    document.querySelectorAll("[data-style]").forEach((b) => b.classList.toggle("active", b.dataset.style === browse.style));
+    loadIcons();
+  }
+});
+
+/* ─── Add to Library state ─────────────────────────────────────────────── */
+const add = {
+  node:          null,  // { id, name, type } from Figma sandbox
+  rawSvg:        null,  // SVG as exported by Figma
+  processedSvg:  null,  // after normalization
+  formName:      "",
+  formStyle:     "line",
+  formBrands:    [...ALL_BRANDS],
+  forceCC:       true,
+  phase:         "select",  // select | exporting | preview | saving | done | duplicate
+  dupName:       "",
+};
+
+const $addContent = document.getElementById("addContent");
+
+function renderAdd() {
+  switch (add.phase) {
+    case "select":     return renderAddSelect();
+    case "exporting":  return renderAddExporting();
+    case "preview":    return renderAddPreview();
+    case "saving":     return renderAddSaving();
+    case "done":       return renderAddDone();
+    case "duplicate":  return renderAddDuplicate();
+  }
+}
+
+/* ── Select phase ── */
+function renderAddSelect() {
+  if (!add.node) {
+    $addContent.innerHTML = `
+      <div class="sel-empty">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+        </svg>
+        <strong style="color:#44403c;font-size:12px">Select a layer in Figma</strong>
+        <span style="font-size:11px;line-height:1.5">Select any frame, component, group,<br>or icon to add it to the library.</span>
+      </div>`;
     return;
   }
 
-  const styleBtn = e.target.closest("[data-style]");
-  if (styleBtn) {
-    state.style = styleBtn.dataset.style;
-    document.querySelectorAll("[data-style]").forEach((b) =>
-      b.classList.toggle("active", b.dataset.style === state.style)
-    );
-    load();
-  }
-});
+  $addContent.innerHTML = `
+    <div class="sel-card">
+      <span class="sel-card-icon">${nodeTypeIcon(add.node.type)}</span>
+      <div class="sel-card-body">
+        <div class="sel-card-name">${escHtml(add.node.name)}</div>
+        <div class="sel-card-type">${add.node.type.replace("_", " ").toLowerCase()}</div>
+      </div>
+    </div>
+    <button class="export-btn" id="exportBtn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Export &amp; Configure
+    </button>`;
 
-function recolorGrid() {
-  const color = previewColor();
-  document.querySelectorAll(".icon-svg").forEach((el) => {
-    el.style.color = color;
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    add.phase = "exporting";
+    renderAdd();
+    parent.postMessage({ pluginMessage: { type: "export-frame", nodeId: add.node.id } }, "*");
   });
 }
 
-// Messages from Figma sandbox
+/* ── Exporting phase ── */
+function renderAddExporting() {
+  $addContent.innerHTML = `
+    <div class="sel-empty">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
+      <span>Exporting SVG…</span>
+    </div>`;
+}
+
+/* ── Preview + form phase ── */
+function renderAddPreview() {
+  const svg = add.processedSvg;
+  const previewSvg = svg
+    ? svg.replace(/<svg([^>]*)>/i, '<svg$1 width="48" height="48">')
+    : "";
+
+  $addContent.innerHTML = `
+    <div class="svg-preview" id="svgPreviewBox">${previewSvg}</div>
+
+    <div class="form-section">
+      <label class="form-label">Name</label>
+      <input class="form-input" id="formName" type="text" value="${escHtml(add.formName)}" placeholder="Icon name">
+    </div>
+
+    <div class="form-section">
+      <label class="form-label">Style</label>
+      <div class="style-row">
+        <button class="style-btn${add.formStyle === "line"    ? " active" : ""}" data-s="line">Line</button>
+        <button class="style-btn${add.formStyle === "filled"  ? " active" : ""}" data-s="filled">Filled</button>
+        <button class="style-btn${add.formStyle === "duotone" ? " active" : ""}" data-s="duotone">Duotone</button>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <label class="form-label" style="margin-bottom:6px">Replace colors with currentColor</label>
+      <label class="toggle-row">
+        <input type="checkbox" id="forceCCCheck" ${add.forceCC ? "checked" : ""}>
+        <span>${add.forceCC ? "On — icon will adapt to brand color" : "Off — original colors kept"}</span>
+      </label>
+    </div>
+
+    <div class="form-section">
+      <label class="form-label">Brand availability</label>
+      <div class="brand-row" id="brandRow">
+        <button class="brand-pill${add.formBrands.length === ALL_BRANDS.length ? " on" : ""}" data-b="all">All brands</button>
+        <button class="brand-pill${add.formBrands.includes("reddoorz")  ? " on" : ""}" data-b="reddoorz">RedDoorz</button>
+        <button class="brand-pill${add.formBrands.includes("sans")      ? " on" : ""}" data-b="sans">SANS</button>
+        <button class="brand-pill${add.formBrands.includes("urbanview") ? " on" : ""}" data-b="urbanview">Urbanview</button>
+        <button class="brand-pill${add.formBrands.includes("lavana")    ? " on" : ""}" data-b="lavana">Lavana</button>
+      </div>
+    </div>
+
+    <hr class="rule">
+
+    <button class="save-btn primary" id="saveBtn">Save to Library</button>
+    <button class="save-btn outline" id="reselectBtn">← Choose different layer</button>`;
+
+  /* form events */
+  document.getElementById("formName").addEventListener("input", (e) => { add.formName = e.target.value; });
+
+  document.querySelectorAll(".style-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      add.formStyle = btn.dataset.s;
+      document.querySelectorAll(".style-btn").forEach((b) => b.classList.toggle("active", b.dataset.s === add.formStyle));
+    });
+  });
+
+  document.getElementById("forceCCCheck").addEventListener("change", (e) => {
+    add.forceCC = e.target.checked;
+    // Reprocess SVG
+    add.processedSvg = processRawSvg(add.rawSvg, add.forceCC);
+    add.formStyle = guessStyle(add.processedSvg);
+    // Update preview and label
+    const preview = add.processedSvg.replace(/<svg([^>]*)>/i, '<svg$1 width="48" height="48">');
+    document.getElementById("svgPreviewBox").innerHTML = preview;
+    e.target.nextElementSibling.textContent = add.forceCC
+      ? "On — icon will adapt to brand color"
+      : "Off — original colors kept";
+    document.querySelectorAll(".style-btn").forEach((b) => b.classList.toggle("active", b.dataset.s === add.formStyle));
+  });
+
+  document.getElementById("brandRow").addEventListener("click", (e) => {
+    const btn = e.target.closest(".brand-pill");
+    if (!btn) return;
+    if (btn.dataset.b === "all") {
+      add.formBrands = [...ALL_BRANDS];
+    } else {
+      if (add.formBrands.includes(btn.dataset.b)) {
+        add.formBrands = add.formBrands.filter((b) => b !== btn.dataset.b);
+        if (!add.formBrands.length) add.formBrands = [...ALL_BRANDS]; // disallow empty
+      } else {
+        add.formBrands.push(btn.dataset.b);
+      }
+    }
+    // Refresh brand pills
+    document.querySelectorAll(".brand-pill").forEach((p) => {
+      if (p.dataset.b === "all") p.classList.toggle("on", add.formBrands.length === ALL_BRANDS.length);
+      else p.classList.toggle("on", add.formBrands.includes(p.dataset.b));
+    });
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", saveToLibrary);
+  document.getElementById("reselectBtn").addEventListener("click", () => {
+    add.phase = "select";
+    add.rawSvg = null;
+    add.processedSvg = null;
+    renderAdd();
+  });
+}
+
+/* ── Saving phase ── */
+function renderAddSaving() {
+  // Keep the form visible but replace button
+  const saveBtn = document.getElementById("saveBtn");
+  if (saveBtn) {
+    saveBtn.disabled     = true;
+    saveBtn.textContent  = "Saving…";
+  }
+}
+
+/* ── Done phase ── */
+function renderAddDone() {
+  $addContent.innerHTML = `
+    <div class="sel-empty" style="gap:10px">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+      <strong style="color:#166534;font-size:13px">Saved to library</strong>
+      <span style="font-size:11px;color:#a8a29e">"${escHtml(add.formName)}" is now available<br>in Browse and the web tool.</span>
+      <button class="save-btn primary" id="addAnotherBtn" style="width:160px;margin-top:8px">Add another</button>
+    </div>`;
+
+  document.getElementById("addAnotherBtn").addEventListener("click", () => {
+    add.phase = "select";
+    add.rawSvg = null;
+    add.processedSvg = null;
+    renderAdd();
+  });
+}
+
+/* ── Duplicate phase ── */
+function renderAddDuplicate() {
+  $addContent.innerHTML = `
+    <div class="warn-box">Already in library as "<strong>${escHtml(add.dupName)}</strong>". Save anyway to create a copy?</div>
+    <button class="save-btn primary" id="saveAnywayBtn">Save anyway</button>
+    <button class="save-btn outline" id="cancelDupBtn">← Go back</button>`;
+
+  document.getElementById("saveAnywayBtn").addEventListener("click", () => saveToLibrary(true));
+  document.getElementById("cancelDupBtn").addEventListener("click", () => {
+    add.phase = "preview";
+    renderAdd();
+  });
+}
+
+/* ─── Add: helpers ─────────────────────────────────────────────────────── */
+function processRawSvg(raw, applyCC) {
+  const sanitized  = sanitizeSvg(raw);
+  const normalized = normalizeToGrid(normalizeImportedSvg(sanitized));
+  return applyCC ? forceCurrentColor(normalized) : normalized;
+}
+
+async function saveToLibrary(skipDupCheck) {
+  add.phase = "saving";
+  renderAddSaving();
+
+  const svg  = add.processedSvg;
+  const hash = await hashSvg(svg);
+
+  if (!skipDupCheck) {
+    const dupRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/icons?content_hash=eq.${hash}&select=id,name&limit=1`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+    );
+    const dups = await dupRes.json();
+    if (dups.length) {
+      add.dupName = dups[0].name;
+      add.phase   = "duplicate";
+      renderAdd();
+      return;
+    }
+  }
+
+  const payload = {
+    name:               add.formName || add.node.name,
+    svg,
+    style:              add.formStyle,
+    source:             "imported",
+    brand_availability: add.formBrands,
+    content_hash:       hash,
+    stroke_width:       guessStroke(svg),
+    corners:            guessCorners(svg),
+  };
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/icons`, {
+    method:  "POST",
+    headers: {
+      apikey:          SUPABASE_KEY,
+      Authorization:   `Bearer ${SUPABASE_KEY}`,
+      "Content-Type":  "application/json",
+      Prefer:          "return=minimal",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    add.phase = "preview";
+    renderAdd();
+    const saveBtn = document.getElementById("saveBtn");
+    if (saveBtn) { saveBtn.className = "save-btn primary"; saveBtn.disabled = false; saveBtn.textContent = "Error — try again"; }
+    return;
+  }
+
+  add.formName = payload.name;
+  add.phase    = "done";
+  renderAdd();
+}
+
+function nodeTypeIcon(type) {
+  const icons = {
+    FRAME:           `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>`,
+    COMPONENT:       `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
+    COMPONENT_SET:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
+    GROUP:           `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
+    INSTANCE:        `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>`,
+    VECTOR:          `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h4v4H4zM16 4h4v4h-4zM4 16h4v4H4zM16 16h4v4h-4zM8 6h8M18 8v8M16 18H8M6 16V8"/></svg>`,
+  };
+  return icons[type] || icons.FRAME;
+}
+
+/* ─── Tab switching ────────────────────────────────────────────────────── */
+document.querySelectorAll(".tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === tab));
+    document.getElementById("browsePanel").style.display = tab === "browse" ? "flex" : "none";
+    document.getElementById("addPanel").style.display    = tab === "add"    ? "flex" : "none";
+    if (tab === "add") renderAdd();
+  });
+});
+
+/* ─── Messages from Figma sandbox ──────────────────────────────────────── */
 window.onmessage = (e) => {
   const msg = e.data?.pluginMessage;
   if (!msg) return;
 
+  // Browse tab feedback
   if (msg.type === "insert-done") {
-    $insertBtn.className = "insert-btn done";
+    $insertBtn.className  = "insert-btn done";
     $insertBtn.textContent = "Inserted ✓";
-    setTimeout(() => renderFooter(), 1600);
+    setTimeout(() => renderInsertBtn(), 1600);
+    return;
+  }
+  if (msg.type === "insert-error") {
+    $insertBtn.className  = "insert-btn err";
+    $insertBtn.textContent = "Error — try again";
+    setTimeout(() => renderInsertBtn(), 2000);
+    return;
   }
 
-  if (msg.type === "insert-error") {
-    $insertBtn.className = "insert-btn error";
-    $insertBtn.textContent = "Error — try again";
-    setTimeout(() => renderFooter(), 2000);
+  // Add tab: selection change from Figma
+  if (msg.type === "selection") {
+    add.node = msg.node;
+    if (add.phase === "select") renderAdd();
+    return;
+  }
+
+  // Add tab: export done
+  if (msg.type === "export-done") {
+    add.rawSvg       = msg.svg;
+    add.processedSvg = processRawSvg(msg.svg, add.forceCC);
+    add.formName     = msg.name || "";
+    add.formStyle    = guessStyle(add.processedSvg);
+    add.formBrands   = [...ALL_BRANDS];
+    add.phase        = "preview";
+    renderAdd();
+    return;
+  }
+
+  // Add tab: export error
+  if (msg.type === "export-error") {
+    add.phase = "select";
+    renderAdd();
+    return;
   }
 };
 
-// ── Init ─────────────────────────────────────────────────────────────────────
-load();
+/* ─── Init ─────────────────────────────────────────────────────────────── */
+loadIcons();
 </script>
 </body>
 </html>
