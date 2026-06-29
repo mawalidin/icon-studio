@@ -731,56 +731,68 @@ async function saveToLibrary(skipDupCheck) {
   add.phase = "saving";
   renderAddSaving();
 
-  const svg  = add.processedSvg;
-  const hash = await hashSvg(svg);
+  try {
+    const svg = add.processedSvg;
+    if (!svg) throw new Error("SVG is empty — try exporting the layer again.");
 
-  if (!skipDupCheck) {
-    const dupRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/icons?content_hash=eq.${hash}&select=id,name&limit=1`,
-      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
-    );
-    const dups = await dupRes.json();
-    if (dups.length) {
-      add.dupName = dups[0].name;
-      add.phase   = "duplicate";
-      renderAdd();
-      return;
+    const hash = await hashSvg(svg);
+
+    if (!skipDupCheck) {
+      const dupRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/icons?content_hash=eq.${hash}&select=id,name&limit=1`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+      );
+      if (!dupRes.ok) throw new Error(`Duplicate check failed (${dupRes.status})`);
+      const dups = await dupRes.json();
+      if (dups.length) {
+        add.dupName = dups[0].name;
+        add.phase   = "duplicate";
+        renderAdd();
+        return;
+      }
     }
-  }
 
-  const payload = {
-    name:               add.formName || add.node.name,
-    svg,
-    style:              add.formStyle,
-    source:             "imported",
-    brand_availability: add.formBrands,
-    content_hash:       hash,
-    stroke_width:       guessStroke(svg),
-    corners:            guessCorners(svg),
-  };
+    const payload = {
+      name:               (add.formName || add.node.name).trim(),
+      svg,
+      style:              add.formStyle,
+      source:             "imported",
+      brand_availability: add.formBrands,
+      content_hash:       hash,
+      stroke_width:       guessStroke(svg),
+      corners:            guessCorners(svg),
+    };
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/icons`, {
-    method:  "POST",
-    headers: {
-      apikey:          SUPABASE_KEY,
-      Authorization:   `Bearer ${SUPABASE_KEY}`,
-      "Content-Type":  "application/json",
-      Prefer:          "return=minimal",
-    },
-    body: JSON.stringify(payload),
-  });
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/icons`, {
+      method:  "POST",
+      headers: {
+        apikey:          SUPABASE_KEY,
+        Authorization:   `Bearer ${SUPABASE_KEY}`,
+        "Content-Type":  "application/json",
+        Prefer:          "return=minimal",
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (!res.ok) {
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "");
+      throw new Error(`Server error ${res.status}${detail ? ": " + detail.slice(0, 160) : ""}`);
+    }
+
+    add.formName = payload.name;
+    add.phase    = "done";
+    renderAdd();
+
+  } catch (err) {
+    // Show error without freezing — reset to preview with an error banner
     add.phase = "preview";
     renderAdd();
-    const saveBtn = document.getElementById("saveBtn");
-    if (saveBtn) { saveBtn.className = "save-btn primary"; saveBtn.disabled = false; saveBtn.textContent = "Error — try again"; }
-    return;
+    const errBox = document.createElement("div");
+    errBox.className = "warn-box";
+    errBox.style.cssText = "background:#fef2f2;border-color:#fca5a5;color:#991b1b;margin-top:8px";
+    errBox.textContent = err.message || "Unknown error — check your connection and try again.";
+    $addContent.appendChild(errBox);
   }
-
-  add.formName = payload.name;
-  add.phase    = "done";
-  renderAdd();
 }
 
 function nodeTypeIcon(type) {
