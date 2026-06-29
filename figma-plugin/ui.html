@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Icon Studio</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 12px;
+    background: #fafaf9;
+    color: #1c1917;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ─────────────────────────────────────── */
+  .header {
+    padding: 10px 12px 8px;
+    background: #ffffff;
+    border-bottom: 1px solid #e7e5e4;
+    flex-shrink: 0;
+  }
+
+  .search-wrap { position: relative; }
+  .search-icon {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a8a29e;
+    pointer-events: none;
+  }
+  .search {
+    width: 100%;
+    height: 30px;
+    padding: 0 8px 0 28px;
+    border: 1px solid #d6d3d1;
+    border-radius: 6px;
+    font-size: 12px;
+    background: #fafaf9;
+    color: #1c1917;
+    outline: none;
+    transition: border-color 0.1s, background 0.1s;
+  }
+  .search::placeholder { color: #a8a29e; }
+  .search:focus { border-color: #1c1917; background: #ffffff; }
+
+  .filter-row { display: flex; gap: 4px; margin-top: 7px; flex-wrap: wrap; }
+
+  .pill {
+    padding: 2px 9px;
+    border-radius: 999px;
+    border: 1px solid #d6d3d1;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    background: #ffffff;
+    color: #78716c;
+    transition: all 0.1s;
+    line-height: 18px;
+    white-space: nowrap;
+  }
+  .pill:hover { border-color: #a8a29e; color: #1c1917; }
+  .pill.active { background: #1c1917; border-color: #1c1917; color: #ffffff; }
+  .pill[data-brand="reddoorz"].active { background: #E63946; border-color: #E63946; }
+  .pill[data-brand="sans"].active     { background: #1D2A3A; border-color: #1D2A3A; }
+  .pill[data-brand="urbanview"].active { background: #2E7D6B; border-color: #2E7D6B; }
+  .pill[data-brand="lavana"].active   { background: #1B2A4A; border-color: #1B2A4A; }
+
+  .divider { width: 1px; height: 18px; background: #e7e5e4; margin: 2px 2px 0; align-self: center; flex-shrink: 0; }
+
+  /* ── Grid ───────────────────────────────────────── */
+  .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: #e7e5e4;
+  }
+
+  .icon-cell {
+    background: #fafaf9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 4px 7px;
+    cursor: pointer;
+    transition: background 0.1s;
+    user-select: none;
+  }
+  .icon-cell:hover { background: #f5f5f4; }
+  .icon-cell.selected { background: #e7e5e4; }
+
+  .icon-svg {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .icon-svg svg { display: block; }
+
+  .icon-name {
+    font-size: 9px;
+    color: #78716c;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    padding: 0 2px;
+    line-height: 1.3;
+  }
+  .icon-cell.selected .icon-name { color: #44403c; }
+
+  /* ── States ─────────────────────────────────────── */
+  .state-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 40px 24px;
+    color: #a8a29e;
+    text-align: center;
+    min-height: 160px;
+  }
+  .state-box svg { color: #d6d3d1; }
+
+  /* ── Footer ─────────────────────────────────────── */
+  .footer {
+    padding: 10px 12px;
+    background: #ffffff;
+    border-top: 1px solid #e7e5e4;
+    flex-shrink: 0;
+  }
+
+  .insert-btn {
+    width: 100%;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .insert-btn:not(:disabled) { background: #1c1917; color: #ffffff; }
+  .insert-btn:not(:disabled):hover { background: #292524; }
+  .insert-btn:disabled { background: #f5f5f4; color: #a8a29e; cursor: default; border: 1px solid #e7e5e4; }
+  .insert-btn.done { background: #166534; }
+  .insert-btn.error { background: #991b1b; }
+
+  /* count badge */
+  .count { font-size: 10px; color: #a8a29e; text-align: right; padding: 4px 10px 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="search-wrap">
+    <span class="search-icon">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </span>
+    <input id="search" class="search" type="text" placeholder="Search icons…" autocomplete="off" spellcheck="false">
+  </div>
+
+  <div class="filter-row" id="brandRow">
+    <button class="pill active" data-brand="">All</button>
+    <button class="pill" data-brand="reddoorz">RedDoorz</button>
+    <button class="pill" data-brand="sans">SANS</button>
+    <button class="pill" data-brand="urbanview">Urbanview</button>
+    <button class="pill" data-brand="lavana">Lavana</button>
+    <span class="divider"></span>
+    <button class="pill active" data-style="">All</button>
+    <button class="pill" data-style="line">Line</button>
+    <button class="pill" data-style="filled">Filled</button>
+    <button class="pill" data-style="duotone">Duotone</button>
+  </div>
+</div>
+
+<div class="scroll" id="scroll">
+  <div id="grid" class="grid"></div>
+  <div id="stateBox" class="state-box" style="display:none"></div>
+</div>
+<div id="count" class="count" style="display:none"></div>
+
+<div class="footer">
+  <button id="insertBtn" class="insert-btn" disabled>Select an icon to insert</button>
+</div>
+
+<script>
+const SUPABASE_URL = "https://tvrnkdaclrkawgstxprw.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2cm5rZGFjbHJrYXdnc3R4cHJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MTY1ODYsImV4cCI6MjA5ODI5MjU4Nn0._x3hsKmrO1GlN_AI-TKiYGUw8kMv2fBlL31yzpMkxg0";
+
+const BRAND_COLORS = {
+  reddoorz:  "#E63946",
+  sans:      "#1D2A3A",
+  urbanview: "#2E7D6B",
+  lavana:    "#1B2A4A",
+};
+const PREVIEW_COLOR = "#78716c"; // neutral when no brand selected
+
+// ── State ────────────────────────────────────────────────────────────────────
+let state = {
+  brand:    "",
+  style:    "",
+  search:   "",
+  selected: null,
+  icons:    [],
+  loading:  false,
+};
+
+// ── DOM refs ─────────────────────────────────────────────────────────────────
+const $grid      = document.getElementById("grid");
+const $stateBox  = document.getElementById("stateBox");
+const $count     = document.getElementById("count");
+const $insertBtn = document.getElementById("insertBtn");
+const $search    = document.getElementById("search");
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function bakeColor(svg, color) {
+  return svg.replace(/currentColor/gi, color);
+}
+
+function previewColor() {
+  return state.brand ? BRAND_COLORS[state.brand] : PREVIEW_COLOR;
+}
+
+function insertColor() {
+  // Insert with brand color if selected; otherwise use black so Figma renders correctly
+  return state.brand ? BRAND_COLORS[state.brand] : "#000000";
+}
+
+// ── Fetch ────────────────────────────────────────────────────────────────────
+async function load() {
+  state.loading = true;
+  state.selected = null;
+  renderFooter();
+  showLoading();
+
+  try {
+    const params = new URLSearchParams({
+      select: "id,name,svg,style,brand_availability",
+      order:  "name.asc",
+      limit:  "500",
+    });
+    if (state.search) params.set("name", `ilike.*${state.search}*`);
+    if (state.style)  params.set("style", `eq.${state.style}`);
+    if (state.brand)  params.set("brand_availability", `cs.{${state.brand}}`);
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/icons?${params}`, {
+      headers: {
+        apikey:        SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
+    });
+
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    state.icons = await res.json();
+    state.loading = false;
+    renderGrid();
+  } catch (err) {
+    state.loading = false;
+    showError(err.message);
+  }
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function renderGrid() {
+  if (!state.icons.length) {
+    $grid.innerHTML = "";
+    showEmpty();
+    return;
+  }
+
+  hideState();
+  const color = previewColor();
+  $grid.innerHTML = state.icons.map((icon) => `
+    <div class="icon-cell" data-id="${icon.id}" title="${escHtml(icon.name)}">
+      <div class="icon-svg" style="color:${color}">${icon.svg}</div>
+      <div class="icon-name">${escHtml(icon.name)}</div>
+    </div>
+  `).join("");
+
+  $count.style.display = "block";
+  $count.textContent = `${state.icons.length} icon${state.icons.length !== 1 ? "s" : ""}`;
+}
+
+function renderFooter() {
+  const btn = $insertBtn;
+  if (state.selected) {
+    btn.disabled = false;
+    btn.className = "insert-btn";
+    btn.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+      </svg>
+      Insert "${escHtml(state.selected.name)}"
+    `;
+  } else {
+    btn.disabled = true;
+    btn.className = "insert-btn";
+    btn.textContent = "Select an icon to insert";
+  }
+}
+
+function showLoading() {
+  $grid.innerHTML = "";
+  $count.style.display = "none";
+  $stateBox.style.display = "flex";
+  $stateBox.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+    </svg>
+    <span>Loading…</span>
+  `;
+}
+
+function showEmpty() {
+  $count.style.display = "none";
+  $stateBox.style.display = "flex";
+  $stateBox.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <span>No icons found</span>
+  `;
+}
+
+function showError(msg) {
+  $grid.innerHTML = "";
+  $count.style.display = "none";
+  $stateBox.style.display = "flex";
+  $stateBox.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span>Failed to load</span>
+    <span style="font-size:10px;color:#d6d3d1">${escHtml(msg)}</span>
+  `;
+}
+
+function hideState() {
+  $stateBox.style.display = "none";
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ── Events ───────────────────────────────────────────────────────────────────
+
+// Grid click (event delegation)
+$grid.addEventListener("click", (e) => {
+  const cell = e.target.closest(".icon-cell");
+  if (!cell) return;
+
+  document.querySelectorAll(".icon-cell.selected").forEach((c) => c.classList.remove("selected"));
+  cell.classList.add("selected");
+
+  const id = cell.dataset.id;
+  state.selected = state.icons.find((i) => i.id === id) ?? null;
+  renderFooter();
+});
+
+// Insert button
+$insertBtn.addEventListener("click", () => {
+  if (!state.selected) return;
+
+  const svg = bakeColor(state.selected.svg, insertColor());
+  parent.postMessage({ pluginMessage: { type: "insert-icon", svg, name: state.selected.name } }, "*");
+});
+
+// Search (debounced)
+let searchTimer;
+$search.addEventListener("input", (e) => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    state.search = e.target.value.trim();
+    load();
+  }, 280);
+});
+
+// Brand filter
+document.getElementById("brandRow").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-brand]");
+  if (btn) {
+    state.brand = btn.dataset.brand;
+    document.querySelectorAll("[data-brand]").forEach((b) =>
+      b.classList.toggle("active", b.dataset.brand === state.brand)
+    );
+    // Re-color grid icons without re-fetching
+    recolorGrid();
+    // Refetch for brand_availability filtering
+    load();
+    return;
+  }
+
+  const styleBtn = e.target.closest("[data-style]");
+  if (styleBtn) {
+    state.style = styleBtn.dataset.style;
+    document.querySelectorAll("[data-style]").forEach((b) =>
+      b.classList.toggle("active", b.dataset.style === state.style)
+    );
+    load();
+  }
+});
+
+function recolorGrid() {
+  const color = previewColor();
+  document.querySelectorAll(".icon-svg").forEach((el) => {
+    el.style.color = color;
+  });
+}
+
+// Messages from Figma sandbox
+window.onmessage = (e) => {
+  const msg = e.data?.pluginMessage;
+  if (!msg) return;
+
+  if (msg.type === "insert-done") {
+    $insertBtn.className = "insert-btn done";
+    $insertBtn.textContent = "Inserted ✓";
+    setTimeout(() => renderFooter(), 1600);
+  }
+
+  if (msg.type === "insert-error") {
+    $insertBtn.className = "insert-btn error";
+    $insertBtn.textContent = "Error — try again";
+    setTimeout(() => renderFooter(), 2000);
+  }
+};
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+load();
+</script>
+</body>
+</html>
