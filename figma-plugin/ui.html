@@ -63,38 +63,67 @@
   }
   .search::placeholder { color: #a8a29e; }
   .search:focus { border-color: #1c1917; background: #fff; }
-  .filter-row { display: flex; gap: 4px; margin-top: 7px; flex-wrap: wrap; }
-  .divider-v { width: 1px; background: #e7e5e4; margin: 2px 1px 0; align-self: stretch; flex-shrink: 0; }
 
-  /* ── Pills ───────────────────────────────────────── */
-  .pill {
-    padding: 2px 9px; border-radius: 999px; border: 1px solid #d6d3d1;
-    font-size: 11px; font-weight: 500; cursor: pointer; background: #fff; color: #78716c;
-    transition: all 0.1s; line-height: 18px; white-space: nowrap;
+  /* ── Filter row with dropdowns ───────────────────── */
+  .filter-row { display: flex; gap: 6px; margin-top: 7px; }
+
+  .dd-wrap { position: relative; }
+
+  .dd-btn {
+    display: flex; align-items: center; gap: 4px;
+    height: 26px; padding: 0 8px;
+    border: 1px solid #d6d3d1; border-radius: 6px;
+    font-size: 11px; font-weight: 500; color: #78716c; background: #fff;
+    cursor: pointer; white-space: nowrap; transition: all 0.1s;
   }
-  .pill:hover { border-color: #a8a29e; color: #1c1917; }
-  .pill.active { background: #1c1917; border-color: #1c1917; color: #fff; }
-  .pill[data-brand="reddoorz"].active  { background: #E63946; border-color: #E63946; }
-  .pill[data-brand="sans"].active      { background: #1D2A3A; border-color: #1D2A3A; }
-  .pill[data-brand="urbanview"].active { background: #2E7D6B; border-color: #2E7D6B; }
-  .pill[data-brand="lavana"].active    { background: #1B2A4A; border-color: #1B2A4A; }
+  .dd-btn:hover { border-color: #a8a29e; color: #1c1917; }
+  .dd-btn.active { border-color: #1c1917; color: #1c1917; }
 
-  /* ── Browse: grid ────────────────────────────────── */
+  .dd-chevron { transition: transform 0.15s; flex-shrink: 0; }
+  .dd-btn[aria-expanded="true"] .dd-chevron { transform: rotate(180deg); }
+
+  .dd-menu {
+    position: absolute; top: calc(100% + 4px); left: 0;
+    background: #fff; border: 1px solid #e7e5e4; border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+    min-width: 148px; z-index: 100; overflow: hidden;
+    display: none;
+  }
+  .dd-menu.open { display: block; }
+
+  .dd-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; font-size: 12px; color: #44403c;
+    cursor: pointer; transition: background 0.1s; user-select: none;
+  }
+  .dd-item:hover { background: #f5f5f4; }
+  .dd-item.active { color: #1c1917; font-weight: 500; }
+
+  .dd-check { width: 12px; height: 12px; flex-shrink: 0; color: #1c1917; }
+  .dd-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dd-sep { border: none; border-top: 1px solid #f0efee; margin: 2px 0; }
+
+  /* ── Browse: list ────────────────────────────────── */
   .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0; }
-  .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: #e7e5e4; }
-  .icon-cell {
-    background: #fafaf9; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 4px; padding: 10px 4px 7px; cursor: pointer; transition: background 0.1s; user-select: none;
+  .list { display: flex; flex-direction: column; }
+
+  .icon-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 12px; height: 32px; cursor: pointer; flex-shrink: 0;
+    transition: background 0.1s; user-select: none;
   }
-  .icon-cell:hover { background: #f5f5f4; }
-  .icon-cell.selected { background: #e7e5e4; outline: 2px solid #1c1917; outline-offset: -2px; }
-  .icon-svg { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
-  .icon-svg svg { display: block; }
-  .icon-name {
-    font-size: 9px; color: #78716c; text-align: center;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    width: 100%; padding: 0 2px;
+  .icon-row:hover { background: #f5f5f4; }
+  .icon-row.selected { background: #f0efee; box-shadow: inset 2px 0 0 #1c1917; }
+
+  .icon-row-svg {
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .icon-row-svg svg { display: block; width: 18px; height: 18px; }
+
+  .icon-row-name {
+    font-size: 12px; color: #1c1917;
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
 
   /* ── State box (loading / empty / error) ─────────── */
@@ -236,22 +265,74 @@
       </span>
       <input id="search" class="search" type="text" placeholder="Search icons…" autocomplete="off" spellcheck="false">
     </div>
-    <div class="filter-row" id="filterRow">
-      <button class="pill active" data-brand="">All</button>
-      <button class="pill" data-brand="reddoorz">RedDoorz</button>
-      <button class="pill" data-brand="sans">SANS</button>
-      <button class="pill" data-brand="urbanview">Urbanview</button>
-      <button class="pill" data-brand="lavana">Lavana</button>
-      <span class="divider-v"></span>
-      <button class="pill active" data-style="">All</button>
-      <button class="pill" data-style="line">Line</button>
-      <button class="pill" data-style="filled">Filled</button>
-      <button class="pill" data-style="duotone">Duotone</button>
+
+    <div class="filter-row">
+      <!-- Brand dropdown -->
+      <div class="dd-wrap">
+        <button class="dd-btn" id="brandBtn" aria-expanded="false" aria-haspopup="true">
+          <span id="brandLabel">Brand</span>
+          <svg class="dd-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="dd-menu" id="brandMenu" role="menu">
+          <div class="dd-item active" data-brand="" role="menuitem">
+            <svg class="dd-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            All brands
+          </div>
+          <hr class="dd-sep">
+          <div class="dd-item" data-brand="reddoorz" role="menuitem">
+            <svg class="dd-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="visibility:hidden"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="dd-dot" style="background:#E63946"></span>RedDoorz
+          </div>
+          <div class="dd-item" data-brand="sans" role="menuitem">
+            <svg class="dd-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="visibility:hidden"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="dd-dot" style="background:#1D2A3A"></span>SANS
+          </div>
+          <div class="dd-item" data-brand="urbanview" role="menuitem">
+            <svg class="dd-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="visibility:hidden"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="dd-dot" style="background:#2E7D6B"></span>Urbanview
+          </div>
+          <div class="dd-item" data-brand="lavana" role="menuitem">
+            <svg class="dd-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="visibility:hidden"><polyline points="20 6 9 17 4 12"/></svg>
+            <span class="dd-dot" style="background:#1B2A4A"></span>Lavana
+          </div>
+        </div>
+      </div>
+
+      <!-- Style dropdown -->
+      <div class="dd-wrap">
+        <button class="dd-btn" id="styleBtn" aria-expanded="false" aria-haspopup="true">
+          <span id="styleLabel">Style</span>
+          <svg class="dd-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <div class="dd-menu" id="styleMenu" role="menu">
+          <div class="dd-item active" data-style="" role="menuitem">
+            <svg class="dd-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            All styles
+          </div>
+          <hr class="dd-sep">
+          <div class="dd-item" data-style="line" role="menuitem">
+            <svg class="dd-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="visibility:hidden"><polyline points="20 6 9 17 4 12"/></svg>
+            Line
+          </div>
+          <div class="dd-item" data-style="filled" role="menuitem">
+            <svg class="dd-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="visibility:hidden"><polyline points="20 6 9 17 4 12"/></svg>
+            Filled
+          </div>
+          <div class="dd-item" data-style="duotone" role="menuitem">
+            <svg class="dd-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="visibility:hidden"><polyline points="20 6 9 17 4 12"/></svg>
+            Duotone
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="scroll" id="scroll">
-    <div id="grid" class="grid"></div>
+    <div id="list" class="list"></div>
     <div id="stateBox" class="state-box" style="display:none"></div>
   </div>
   <div id="count" class="count" style="display:none"></div>
@@ -281,6 +362,9 @@ const BRAND_COLORS = {
 };
 const ALL_BRANDS = ["reddoorz", "sans", "urbanview", "lavana"];
 const NEUTRAL = "#78716c";
+
+const BRAND_LABELS = { "": "Brand", reddoorz: "RedDoorz", sans: "SANS", urbanview: "Urbanview", lavana: "Lavana" };
+const STYLE_LABELS = { "": "Style", line: "Line", filled: "Filled", duotone: "Duotone" };
 
 /* ─── SVG helpers (inlined from svgHelpers.js) ─────────────────────────── */
 function sanitizeSvg(svg) {
@@ -413,7 +497,7 @@ const browse = {
   icons:    [],
 };
 
-const $grid      = document.getElementById("grid");
+const $list      = document.getElementById("list");
 const $stateBox  = document.getElementById("stateBox");
 const $count     = document.getElementById("count");
 const $insertBtn = document.getElementById("insertBtn");
@@ -453,32 +537,32 @@ async function loadIcons() {
     if (!res.ok) throw new Error(`${res.status}`);
 
     browse.icons = await res.json();
-    renderGrid();
+    renderList();
   } catch (err) {
     showBrowseState("error", err.message);
   }
 }
 
 /* ─── Browse: render ───────────────────────────────────────────────────── */
-function renderGrid() {
+function renderList() {
   if (!browse.icons.length) { showBrowseState("empty"); return; }
 
-  $stateBox.style.display  = "none";
-  $count.style.display     = "block";
-  $count.textContent       = `${browse.icons.length} icon${browse.icons.length !== 1 ? "s" : ""}`;
+  $stateBox.style.display = "none";
+  $count.style.display    = "block";
+  $count.textContent      = `${browse.icons.length} icon${browse.icons.length !== 1 ? "s" : ""}`;
 
   const color = previewColor();
-  $grid.innerHTML = browse.icons.map((icon) =>
-    `<div class="icon-cell" data-id="${icon.id}" title="${escHtml(icon.name)}">
-       <div class="icon-svg" style="color:${color}">${icon.svg}</div>
-       <div class="icon-name">${escHtml(icon.name)}</div>
+  $list.innerHTML = browse.icons.map((icon) =>
+    `<div class="icon-row" data-id="${icon.id}" title="${escHtml(icon.name)}">
+       <div class="icon-row-svg" style="color:${color}">${icon.svg}</div>
+       <div class="icon-row-name">${escHtml(icon.name)}</div>
      </div>`
   ).join("");
 }
 
 function showBrowseState(type, detail) {
-  $grid.innerHTML       = "";
-  $count.style.display  = "none";
+  $list.innerHTML         = "";
+  $count.style.display    = "none";
   $stateBox.style.display = "flex";
   if (type === "loading") {
     $stateBox.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg><span>Loading…</span>`;
@@ -496,19 +580,19 @@ function renderInsertBtn() {
     btn.className  = "insert-btn";
     btn.innerHTML  = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>Insert "${escHtml(browse.selected.name)}"`;
   } else {
-    btn.disabled   = true;
-    btn.className  = "insert-btn";
+    btn.disabled    = true;
+    btn.className   = "insert-btn";
     btn.textContent = "Select an icon to insert";
   }
 }
 
-/* ─── Browse: events ───────────────────────────────────────────────────── */
-$grid.addEventListener("click", (e) => {
-  const cell = e.target.closest(".icon-cell");
-  if (!cell) return;
-  document.querySelectorAll(".icon-cell.selected").forEach((c) => c.classList.remove("selected"));
-  cell.classList.add("selected");
-  browse.selected = browse.icons.find((i) => i.id === cell.dataset.id) ?? null;
+/* ─── Browse: list events ──────────────────────────────────────────────── */
+$list.addEventListener("click", (e) => {
+  const row = e.target.closest(".icon-row");
+  if (!row) return;
+  document.querySelectorAll(".icon-row.selected").forEach((r) => r.classList.remove("selected"));
+  row.classList.add("selected");
+  browse.selected = browse.icons.find((i) => i.id === row.dataset.id) ?? null;
   renderInsertBtn();
 });
 
@@ -529,23 +613,70 @@ $search.addEventListener("input", (e) => {
   searchTimer = setTimeout(() => { browse.search = e.target.value.trim(); loadIcons(); }, 280);
 });
 
-document.getElementById("filterRow").addEventListener("click", (e) => {
-  const brandBtn = e.target.closest("[data-brand]");
-  if (brandBtn) {
-    browse.brand = brandBtn.dataset.brand;
-    document.querySelectorAll("[data-brand]").forEach((b) => b.classList.toggle("active", b.dataset.brand === browse.brand));
-    // Re-color existing cells immediately without refetch
-    const color = previewColor();
-    document.querySelectorAll(".icon-svg").forEach((el) => { el.style.color = color; });
-    loadIcons();
-    return;
-  }
-  const styleBtn = e.target.closest("[data-style]");
-  if (styleBtn) {
-    browse.style = styleBtn.dataset.style;
-    document.querySelectorAll("[data-style]").forEach((b) => b.classList.toggle("active", b.dataset.style === browse.style));
-    loadIcons();
-  }
+/* ─── Dropdown logic ───────────────────────────────────────────────────── */
+function closeAllDropdowns() {
+  document.querySelectorAll(".dd-btn").forEach((b) => b.setAttribute("aria-expanded", "false"));
+  document.querySelectorAll(".dd-menu").forEach((m) => m.classList.remove("open"));
+}
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".dd-wrap")) closeAllDropdowns();
+});
+
+function setupDropdown(btnId, menuId) {
+  const btn  = document.getElementById(btnId);
+  const menu = document.getElementById(menuId);
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const open = menu.classList.contains("open");
+    closeAllDropdowns();
+    if (!open) { menu.classList.add("open"); btn.setAttribute("aria-expanded", "true"); }
+  });
+}
+
+setupDropdown("brandBtn", "brandMenu");
+setupDropdown("styleBtn", "styleMenu");
+
+document.getElementById("brandMenu").addEventListener("click", (e) => {
+  const item = e.target.closest(".dd-item[data-brand]");
+  if (!item) return;
+  browse.brand = item.dataset.brand;
+
+  document.getElementById("brandLabel").textContent = BRAND_LABELS[browse.brand];
+  document.getElementById("brandBtn").classList.toggle("active", browse.brand !== "");
+
+  document.querySelectorAll("#brandMenu .dd-item").forEach((el) => {
+    const match = el.dataset.brand === browse.brand;
+    el.classList.toggle("active", match);
+    const chk = el.querySelector(".dd-check");
+    if (chk) chk.style.visibility = match ? "visible" : "hidden";
+  });
+
+  closeAllDropdowns();
+
+  const color = previewColor();
+  document.querySelectorAll(".icon-row-svg").forEach((el) => { el.style.color = color; });
+
+  loadIcons();
+});
+
+document.getElementById("styleMenu").addEventListener("click", (e) => {
+  const item = e.target.closest(".dd-item[data-style]");
+  if (!item) return;
+  browse.style = item.dataset.style;
+
+  document.getElementById("styleLabel").textContent = STYLE_LABELS[browse.style];
+  document.getElementById("styleBtn").classList.toggle("active", browse.style !== "");
+
+  document.querySelectorAll("#styleMenu .dd-item").forEach((el) => {
+    const match = el.dataset.style === browse.style;
+    el.classList.toggle("active", match);
+    const chk = el.querySelector(".dd-check");
+    if (chk) chk.style.visibility = match ? "visible" : "hidden";
+  });
+
+  closeAllDropdowns();
+  loadIcons();
 });
 
 /* ─── Add to Library state ─────────────────────────────────────────────── */
@@ -679,10 +810,8 @@ function renderAddPreview() {
 
   document.getElementById("forceCCCheck").addEventListener("change", (e) => {
     add.forceCC = e.target.checked;
-    // Reprocess SVG
     add.processedSvg = processRawSvg(add.rawSvg, add.forceCC);
     add.formStyle = guessStyle(add.processedSvg);
-    // Update preview and label
     const preview = add.processedSvg.replace(/<svg([^>]*)>/i, '<svg$1 width="48" height="48">');
     document.getElementById("svgPreviewBox").innerHTML = preview;
     e.target.nextElementSibling.textContent = add.forceCC
@@ -699,12 +828,11 @@ function renderAddPreview() {
     } else {
       if (add.formBrands.includes(btn.dataset.b)) {
         add.formBrands = add.formBrands.filter((b) => b !== btn.dataset.b);
-        if (!add.formBrands.length) add.formBrands = [...ALL_BRANDS]; // disallow empty
+        if (!add.formBrands.length) add.formBrands = [...ALL_BRANDS];
       } else {
         add.formBrands.push(btn.dataset.b);
       }
     }
-    // Refresh brand pills
     document.querySelectorAll(".brand-pill").forEach((p) => {
       if (p.dataset.b === "all") p.classList.toggle("on", add.formBrands.length === ALL_BRANDS.length);
       else p.classList.toggle("on", add.formBrands.includes(p.dataset.b));
@@ -722,11 +850,10 @@ function renderAddPreview() {
 
 /* ── Saving phase ── */
 function renderAddSaving() {
-  // Keep the form visible but replace button
   const saveBtn = document.getElementById("saveBtn");
   if (saveBtn) {
-    saveBtn.disabled     = true;
-    saveBtn.textContent  = "Saving…";
+    saveBtn.disabled    = true;
+    saveBtn.textContent = "Saving…";
   }
 }
 
@@ -828,7 +955,6 @@ async function saveToLibrary(skipDupCheck) {
     renderAdd();
 
   } catch (err) {
-    // Show error without freezing — reset to preview with an error banner
     add.phase = "preview";
     renderAdd();
     const errBox = document.createElement("div");
@@ -867,7 +993,6 @@ window.onmessage = (e) => {
   const msg = e.data?.pluginMessage;
   if (!msg) return;
 
-  // Browse tab feedback
   if (msg.type === "insert-done") {
     $insertBtn.className  = "insert-btn done";
     $insertBtn.textContent = "Inserted ✓";
@@ -881,14 +1006,12 @@ window.onmessage = (e) => {
     return;
   }
 
-  // Add tab: selection change from Figma
   if (msg.type === "selection") {
     add.node = msg.node;
     if (add.phase === "select") renderAdd();
     return;
   }
 
-  // Add tab: export done — bytes decoded here (TextDecoder unavailable in sandbox)
   if (msg.type === "export-done") {
     const raw        = new TextDecoder().decode(new Uint8Array(msg.bytes));
     add.rawSvg       = raw;
@@ -901,11 +1024,9 @@ window.onmessage = (e) => {
     return;
   }
 
-  // Add tab: export error — show the message instead of silently resetting
   if (msg.type === "export-error") {
     add.phase = "select";
     renderAdd();
-    // Inject error banner below the selection card
     const banner = document.createElement("div");
     banner.className = "warn-box";
     banner.style.background = "#fef2f2";
