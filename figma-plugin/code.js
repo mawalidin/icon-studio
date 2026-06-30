@@ -28,7 +28,13 @@ figma.ui.onmessage = async (msg) => {
       return;
     }
     try {
-      const bytes = await node.exportAsync({ format: "SVG" });
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Export timed out — try a simpler layer")), 12000)
+      );
+      const bytes = await Promise.race([
+        node.exportAsync({ format: "SVG" }),
+        timeout,
+      ]);
       // Pass raw bytes as a plain array — TextDecoder is unavailable in the
       // Figma sandbox; decoding happens in the UI iframe instead.
       figma.ui.postMessage({
