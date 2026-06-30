@@ -1,25 +1,6 @@
 figma.showUI(__html__, { width: 320, height: 580, themeColors: true });
 
-// Send current Figma selection to the UI whenever it changes.
-function sendSelection() {
-  const sel = figma.currentPage.selection;
-  const node = sel.length === 1 ? sel[0] : null;
-  const exportable =
-    node &&
-    ["FRAME", "COMPONENT", "COMPONENT_SET", "GROUP", "INSTANCE", "VECTOR", "BOOLEAN_OPERATION"].includes(
-      node.type
-    );
-  figma.ui.postMessage({
-    type: "selection",
-    node: exportable ? { id: node.id, name: node.name, type: node.type } : null,
-  });
-}
-
-figma.on("selectionchange", sendSelection);
-sendSelection(); // send on open
-
-// Build an SVG string directly from a VECTOR node's path data and style
-// properties, avoiding exportAsync which can hang the plugin sandbox.
+// Build an SVG string from a VECTOR node's properties without exportAsync.
 function vectorNodeToSvg(node) {
   const vPaths = node.vectorPaths || [];
   if (!vPaths.length) return null;
@@ -32,7 +13,7 @@ function vectorNodeToSvg(node) {
     const a = paint.opacity !== undefined ? paint.opacity : 1;
     const hex = [r, g, b].map(v => Math.round(v * 255).toString(16).padStart(2, "0")).join("");
     return a < 1
-      ? `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a.toFixed(2)})`
+      ? `rgba(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)},${a.toFixed(2)})`
       : `#${hex}`;
   }
 
@@ -59,9 +40,41 @@ function vectorNodeToSvg(node) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">${pathEls}</svg>`;
 }
 
+// Send current selection to the UI.
+// For VECTOR nodes, pre-build the SVG immediately from node properties
+// so the UI never needs a sandbox round-trip for the export.
+function sendSelection() {
+  const sel  = figma.currentPage.selection;
+  const node = sel.length === 1 ? sel[0] : null;
+  const exportable =
+    node &&
+    ["FRAME", "COMPONENT", "COMPONENT_SET", "GROUP", "INSTANCE", "VECTOR", "BOOLEAN_OPERATION"].includes(node.type);
+
+  if (!exportable) {
+    figma.ui.postMessage({ type: "selection", node: null });
+    return;
+  }
+
+  const nodeInfo = { id: node.id, name: node.name, type: node.type };
+
+  if (node.type === "VECTOR" || node.type === "BOOLEAN_OPERATION") {
+    // Build SVG synchronously — direct property access, no async API calls.
+    const svg = vectorNodeToSvg(node);
+    figma.ui.postMessage({ type: "selection", node: nodeInfo, svg: svg || null });
+    return;
+  }
+
+  figma.ui.postMessage({ type: "selection", node: nodeInfo });
+}
+
+figma.on("selectionchange", sendSelection);
+sendSelection();
+
 figma.ui.onmessage = async (msg) => {
 
-  // ── Export a Figma layer as SVG ──────────────────────────────────────────
+  // ── Export a Figma layer as SVG (frames / groups / components only) ───────
+  // VECTOR nodes are handled entirely in the UI via the pre-built SVG sent
+  // with the selection message — no export-frame message is needed for them.
   if (msg.type === "export-frame") {
     figma.ui.postMessage({ type: "export-ack" });
 
@@ -71,20 +84,6 @@ figma.ui.onmessage = async (msg) => {
       return;
     }
 
-    // VECTOR / BOOLEAN_OPERATION: read paths directly — no exportAsync needed.
-    if (node.type === "VECTOR" || node.type === "BOOLEAN_OPERATION") {
-      const svg = vectorNodeToSvg(node);
-      if (svg) {
-        figma.ui.postMessage({ type: "export-done", svg, name: node.name });
-      } else {
-        figma.ui.postMessage({ type: "export-error", error: "No path data found. Try flattening the layer (Ctrl+E) and selecting it again." });
-      }
-      return;
-    }
-
-    // FRAME / GROUP / COMPONENT / INSTANCE: use exportAsync.
-    // Note: exportAsync can block the sandbox event loop on some setups;
-    // the UI has its own 20s fallback timer that will surface an error.
     try {
       const bytes = await node.exportAsync({ format: "SVG" });
 

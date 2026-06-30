@@ -340,7 +340,7 @@
   <div class="browse-footer">
     <button id="insertBtn" class="insert-btn" disabled>Select an icon to insert</button>
   </div>
-  <div style="text-align:center;font-size:9px;color:#d6d3d1;padding:2px 0">v4</div>
+  <div style="text-align:center;font-size:9px;color:#d6d3d1;padding:2px 0">v5</div>
 </div>
 
 <!-- ── Add to Library panel ─────────────────────────────────────────────── -->
@@ -684,6 +684,7 @@ document.getElementById("styleMenu").addEventListener("click", (e) => {
 /* ─── Add to Library state ─────────────────────────────────────────────── */
 const add = {
   node:          null,  // { id, name, type } from Figma sandbox
+  preBuiltSvg:   null,  // SVG built synchronously on selection (VECTOR nodes only)
   rawSvg:        null,  // SVG as exported by Figma
   processedSvg:  null,  // after normalization
   formName:      "",
@@ -737,6 +738,28 @@ function renderAddSelect() {
     </button>`;
 
   document.getElementById("exportBtn").addEventListener("click", () => {
+    // VECTOR nodes: SVG was pre-built during selection — go straight to preview, no sandbox round-trip.
+    if (add.preBuiltSvg) {
+      try {
+        const raw = add.preBuiltSvg;
+        add.rawSvg       = raw;
+        add.processedSvg = processRawSvg(raw, add.forceCC);
+        if (!add.processedSvg) throw new Error("Could not parse SVG — try flattening the layer first");
+        add.formName   = add.node.name || "";
+        add.formStyle  = guessStyle(add.processedSvg);
+        add.formBrands = [...ALL_BRANDS];
+        add.phase      = "preview";
+        renderAdd();
+      } catch (err) {
+        const banner = document.createElement("div");
+        banner.className = "warn-box";
+        banner.style.cssText = "background:#fef2f2;border-color:#fca5a5;color:#991b1b;margin-top:8px";
+        banner.textContent = "Export failed: " + (err.message || "unknown error");
+        $addContent.appendChild(banner);
+      }
+      return;
+    }
+    // FRAME / GROUP / COMPONENT: sandbox round-trip via exportAsync.
     add.phase = "exporting";
     renderAdd();
     parent.postMessage({ pluginMessage: { type: "export-frame", nodeId: add.node.id } }, "*");
@@ -876,9 +899,10 @@ function renderAddPreview() {
 
   document.getElementById("saveBtn").addEventListener("click", saveToLibrary);
   document.getElementById("reselectBtn").addEventListener("click", () => {
-    add.phase = "select";
-    add.rawSvg = null;
+    add.phase        = "select";
+    add.rawSvg       = null;
     add.processedSvg = null;
+    add.preBuiltSvg  = null;
     renderAdd();
   });
 }
@@ -905,9 +929,10 @@ function renderAddDone() {
     </div>`;
 
   document.getElementById("addAnotherBtn").addEventListener("click", () => {
-    add.phase = "select";
-    add.rawSvg = null;
+    add.phase        = "select";
+    add.rawSvg       = null;
     add.processedSvg = null;
+    add.preBuiltSvg  = null;
     renderAdd();
   });
 }
@@ -1052,7 +1077,8 @@ window.onmessage = (e) => {
   }
 
   if (msg.type === "selection") {
-    add.node = msg.node;
+    add.node        = msg.node;
+    add.preBuiltSvg = msg.svg || null;  // present for VECTOR/BOOLEAN_OPERATION nodes
     if (add.phase === "select") renderAdd();
     return;
   }
