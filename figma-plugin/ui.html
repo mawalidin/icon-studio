@@ -340,7 +340,7 @@
   <div class="browse-footer">
     <button id="insertBtn" class="insert-btn" disabled>Select an icon to insert</button>
   </div>
-  <div style="text-align:center;font-size:9px;color:#d6d3d1;padding:2px 0">v5</div>
+  <div style="text-align:center;font-size:9px;color:#d6d3d1;padding:2px 0">v6</div>
 </div>
 
 <!-- ── Add to Library panel ─────────────────────────────────────────────── -->
@@ -738,13 +738,13 @@ function renderAddSelect() {
     </button>`;
 
   document.getElementById("exportBtn").addEventListener("click", () => {
-    // VECTOR nodes: SVG was pre-built during selection — go straight to preview, no sandbox round-trip.
     if (add.preBuiltSvg) {
+      // SVG was built synchronously on selection — go straight to preview.
       try {
         const raw = add.preBuiltSvg;
         add.rawSvg       = raw;
         add.processedSvg = processRawSvg(raw, add.forceCC);
-        if (!add.processedSvg) throw new Error("Could not parse SVG — try flattening the layer first");
+        if (!add.processedSvg) throw new Error("Could not parse SVG");
         add.formName   = add.node.name || "";
         add.formStyle  = guessStyle(add.processedSvg);
         add.formBrands = [...ALL_BRANDS];
@@ -759,10 +759,13 @@ function renderAddSelect() {
       }
       return;
     }
-    // FRAME / GROUP / COMPONENT: sandbox round-trip via exportAsync.
-    add.phase = "exporting";
+    // No vector paths found in the layer — show actionable error inline.
     renderAdd();
-    parent.postMessage({ pluginMessage: { type: "export-frame", nodeId: add.node.id } }, "*");
+    const banner = document.createElement("div");
+    banner.className = "warn-box";
+    banner.style.cssText = "background:#fef2f2;border-color:#fca5a5;color:#991b1b;margin-top:8px";
+    banner.textContent = "No vector paths found. Try flattening the layer first (Ctrl+E), then select it again.";
+    $addContent.appendChild(banner);
   });
 }
 
