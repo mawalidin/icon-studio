@@ -742,12 +742,27 @@ function renderAddSelect() {
 }
 
 /* ── Exporting phase ── */
+let _exportAckTimer = null;
+
 function renderAddExporting() {
   $addContent.innerHTML = `
     <div class="sel-empty">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
       <span>Exporting SVG…</span>
     </div>`;
+
+  // If the sandbox doesn't acknowledge within 6s, the message channel is broken.
+  clearTimeout(_exportAckTimer);
+  _exportAckTimer = setTimeout(() => {
+    if (add.phase !== "exporting") return;
+    add.phase = "select";
+    renderAdd();
+    const banner = document.createElement("div");
+    banner.className = "warn-box";
+    banner.style.cssText = "background:#fef2f2;border-color:#fca5a5;color:#991b1b;margin-top:8px";
+    banner.textContent = "Plugin sandbox not responding. Close and reopen the plugin, then try again.";
+    $addContent.appendChild(banner);
+  }, 6000);
 }
 
 /* ── Preview + form phase ── */
@@ -1003,6 +1018,12 @@ window.onmessage = (e) => {
     $insertBtn.className  = "insert-btn err";
     $insertBtn.textContent = "Error — try again";
     setTimeout(() => renderInsertBtn(), 2000);
+    return;
+  }
+
+  // Sandbox confirmed it received the export request — cancel the dead-channel timer.
+  if (msg.type === "export-ack") {
+    clearTimeout(_exportAckTimer);
     return;
   }
 

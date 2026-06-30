@@ -22,14 +22,17 @@ figma.ui.onmessage = async (msg) => {
 
   // ── Export a Figma layer as SVG ──────────────────────────────────────────
   if (msg.type === "export-frame") {
+    // Immediately acknowledge receipt so the UI knows the sandbox is alive.
+    figma.ui.postMessage({ type: "export-ack" });
+
     const node = figma.getNodeById(msg.nodeId);
     if (!node) {
-      figma.ui.postMessage({ type: "export-error", error: "Layer not found" });
+      figma.ui.postMessage({ type: "export-error", error: "Layer not found — try reselecting the layer" });
       return;
     }
     try {
       const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Export timed out — try a simpler layer")), 12000)
+        setTimeout(() => reject(new Error("Export timed out — try a simpler or flattened layer")), 15000)
       );
       const bytes = await Promise.race([
         node.exportAsync({ format: "SVG" }),
