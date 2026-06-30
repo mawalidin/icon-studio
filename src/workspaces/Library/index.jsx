@@ -570,6 +570,7 @@ export default function Library() {
 
   const [icons,        setIcons]        = useState([]);
   const [loading,      setLoading]      = useState(true);
+  const [refreshing,   setRefreshing]   = useState(false);
   const [error,        setError]        = useState(null);
   const [search,       setSearch]       = useState("");
   const [filterBrand,  setFilterBrand]  = useState(null);
@@ -582,9 +583,10 @@ export default function Library() {
   const selectedIcon = icons.find((i) => i.id === selectedId) ?? null;
 
   // ── Data ──────────────────────────────────────────────────────────────
-  const fetchIcons = useCallback(async () => {
+  const fetchIcons = useCallback(async (manual = false) => {
     if (!isConfigured) { setLoading(false); return; }
-    setLoading(true);
+    if (manual) setRefreshing(true);
+    else        setLoading(true);
     setError(null);
     try {
       const { data, error: err } = await supabase
@@ -597,6 +599,7 @@ export default function Library() {
       setError(e.message ?? "Failed to load icons.");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -678,7 +681,7 @@ export default function Library() {
   if (loading) {
     return (
       <div className="h-full flex flex-col">
-        <Header search="" onSearch={() => {}} viewBrandId={null} onViewBrand={() => {}} filterBrand={null} onFilterBrand={() => {}} filterStyle={null} onFilterStyle={() => {}} filterSource={null} onFilterSource={() => {}} count={0} activeFilters={0} onClear={() => {}} />
+        <Header search="" onSearch={() => {}} viewBrandId={null} onViewBrand={() => {}} filterBrand={null} onFilterBrand={() => {}} filterStyle={null} onFilterStyle={() => {}} filterSource={null} onFilterSource={() => {}} count={0} activeFilters={0} onClear={() => {}} onRefresh={() => {}} refreshing={false} />
         <div className="flex-1 p-6 grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", alignContent: "start" }}>
           {Array.from({ length: 30 }).map((_, i) => (
             <div key={i} className="aspect-square rounded-xl bg-stone-100 border border-stone-200 animate-pulse" />
@@ -712,6 +715,8 @@ export default function Library() {
         count={filtered.length}
         activeFilters={activeFilters}
         onClear={clearFilters}
+        onRefresh={() => fetchIcons(true)}
+        refreshing={refreshing}
       />
 
       <div className="flex-1 overflow-hidden flex min-h-0">
@@ -768,6 +773,7 @@ function Header({
   filterStyle, onFilterStyle,
   filterSource, onFilterSource,
   count, activeFilters, onClear,
+  onRefresh, refreshing,
 }) {
   return (
     <div className="flex-none border-b border-stone-200 bg-white">
@@ -799,6 +805,23 @@ function Header({
             Clear filters
           </button>
         )}
+        <button
+          onClick={onRefresh}
+          disabled={refreshing}
+          title="Refresh library"
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition flex-none disabled:opacity-40"
+        >
+          <svg
+            width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            className={refreshing ? "animate-spin" : ""}
+          >
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M8 16H3v5" />
+          </svg>
+        </button>
       </div>
 
       {/* Row 2: filters + view brand picker */}
