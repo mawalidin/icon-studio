@@ -22,7 +22,6 @@ figma.ui.onmessage = async (msg) => {
 
   // ── Export a Figma layer as SVG ──────────────────────────────────────────
   if (msg.type === "export-frame") {
-    // Immediately acknowledge receipt so the UI knows the sandbox is alive.
     figma.ui.postMessage({ type: "export-ack" });
 
     const node = figma.getNodeById(msg.nodeId);
@@ -38,13 +37,19 @@ figma.ui.onmessage = async (msg) => {
         node.exportAsync({ format: "SVG" }),
         timeout,
       ]);
-      // Pass raw bytes as a plain array — TextDecoder is unavailable in the
-      // Figma sandbox; decoding happens in the UI iframe instead.
-      figma.ui.postMessage({
-        type: "export-done",
-        bytes: Array.from(bytes),
-        name: node.name,
-      });
+
+      // Decode bytes to string in the sandbox.
+      // Try TextDecoder first; fall back to char-by-char if unavailable.
+      let svg;
+      try {
+        svg = new TextDecoder().decode(bytes);
+      } catch (_) {
+        let s = "";
+        for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+        svg = s;
+      }
+
+      figma.ui.postMessage({ type: "export-done", svg, name: node.name });
     } catch (err) {
       figma.ui.postMessage({ type: "export-error", error: String(err) });
     }

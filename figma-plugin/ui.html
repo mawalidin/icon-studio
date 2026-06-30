@@ -411,6 +411,7 @@ function normalizeToGrid(svg) {
 }
 
 function forceCurrentColor(svg) {
+  if (!svg) return svg;
   const keep = (v) => /^(none|currentcolor|transparent|inherit)$/i.test(v.trim());
   return svg
     .replace(/(fill|stroke)="([^"]*)"/gi, (m, p, v) => (keep(v) ? m : `${p}="currentColor"`))
@@ -743,27 +744,45 @@ function renderAddSelect() {
 }
 
 /* ── Exporting phase ── */
-let _exportAckTimer = null;
+let _exportAckTimer   = null;
+let _exportTotalTimer = null;
+
+function _showExportError(msg) {
+  add.phase = "select";
+  renderAdd();
+  const banner = document.createElement("div");
+  banner.className = "warn-box";
+  banner.style.cssText = "background:#fef2f2;border-color:#fca5a5;color:#991b1b;margin-top:8px";
+  banner.textContent = msg;
+  $addContent.appendChild(banner);
+}
+
+function _clearExportTimers() {
+  clearTimeout(_exportAckTimer);
+  clearTimeout(_exportTotalTimer);
+}
 
 function renderAddExporting() {
   $addContent.innerHTML = `
     <div class="sel-empty">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
       <span>Exporting SVG…</span>
+      <span id="exportStatus" style="font-size:10px;color:#a8a29e">Requesting from Figma…</span>
     </div>`;
 
-  // If the sandbox doesn't acknowledge within 6s, the message channel is broken.
-  clearTimeout(_exportAckTimer);
+  _clearExportTimers();
+
+  // 6s: sandbox must acknowledge or the message channel is broken
   _exportAckTimer = setTimeout(() => {
     if (add.phase !== "exporting") return;
-    add.phase = "select";
-    renderAdd();
-    const banner = document.createElement("div");
-    banner.className = "warn-box";
-    banner.style.cssText = "background:#fef2f2;border-color:#fca5a5;color:#991b1b;margin-top:8px";
-    banner.textContent = "Plugin sandbox not responding. Close and reopen the plugin, then try again.";
-    $addContent.appendChild(banner);
+    _showExportError("Plugin sandbox not responding. Close and reopen the plugin, then try again.");
   }, 6000);
+
+  // 20s: overall fallback — covers the case where exportAsync blocks the sandbox event loop
+  _exportTotalTimer = setTimeout(() => {
+    if (add.phase !== "exporting") return;
+    _showExportError("Export timed out. Try flattening the layer first (Ctrl+E), then export again.");
+  }, 20000);
 }
 
 /* ── Preview + form phase ── */
@@ -909,8 +928,10 @@ function renderAddDuplicate() {
 
 /* ─── Add: helpers ─────────────────────────────────────────────────────── */
 function processRawSvg(raw, applyCC) {
+  if (!raw) return null;
   const sanitized  = sanitizeSvg(raw);
   const normalized = normalizeToGrid(normalizeImportedSvg(sanitized));
+  if (!normalized) return null;
   return applyCC ? forceCurrentColor(normalized) : normalized;
 }
 
@@ -1022,9 +1043,11 @@ window.onmessage = (e) => {
     return;
   }
 
-  // Sandbox confirmed it received the export request — cancel the dead-channel timer.
+  // Sandbox confirmed receipt — cancel dead-channel timer, update status text.
   if (msg.type === "export-ack") {
     clearTimeout(_exportAckTimer);
+    const status = document.getElementById("exportStatus");
+    if (status) status.textContent = "Figma is generating SVG…";
     return;
   }
 
@@ -1035,27 +1058,27 @@ window.onmessage = (e) => {
   }
 
   if (msg.type === "export-done") {
-    const raw        = new TextDecoder().decode(new Uint8Array(msg.bytes));
-    add.rawSvg       = raw;
-    add.processedSvg = processRawSvg(raw, add.forceCC);
-    add.formName     = msg.name || "";
-    add.formStyle    = guessStyle(add.processedSvg);
-    add.formBrands   = [...ALL_BRANDS];
-    add.phase        = "preview";
-    renderAdd();
+    _clearExportTimers();
+    try {
+      const raw = msg.svg;
+      if (!raw) throw new Error("Empty SVG received from Figma");
+      add.rawSvg       = raw;
+      add.processedSvg = processRawSvg(raw, add.forceCC);
+      if (!add.processedSvg) throw new Error("Could not parse SVG — layer may not contain valid vector content");
+      add.formName   = msg.name || "";
+      add.formStyle  = guessStyle(add.processedSvg);
+      add.formBrands = [...ALL_BRANDS];
+      add.phase      = "preview";
+      renderAdd();
+    } catch (err) {
+      _showExportError("Export failed: " + (err.message || "unknown error"));
+    }
     return;
   }
 
   if (msg.type === "export-error") {
-    add.phase = "select";
-    renderAdd();
-    const banner = document.createElement("div");
-    banner.className = "warn-box";
-    banner.style.background = "#fef2f2";
-    banner.style.borderColor = "#fca5a5";
-    banner.style.color = "#991b1b";
-    banner.textContent = "Export failed: " + (msg.error || "unknown error");
-    $addContent.appendChild(banner);
+    _clearExportTimers();
+    _showExportError("Export failed: " + (msg.error || "unknown error"));
     return;
   }
 };
