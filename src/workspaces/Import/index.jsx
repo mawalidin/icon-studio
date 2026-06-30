@@ -42,8 +42,8 @@ function deriveName(filename) {
 function guessStyle(svg) {
   const hasFill   = /fill\s*[:=]\s*["']?currentColor/i.test(svg);
   const hasStroke = /stroke\s*[:=]\s*["']?currentColor/i.test(svg);
-  const hasDuo    = /opacity\s*[:=]\s*["']?0\.[12]/i.test(svg);
-  if (hasDuo && hasStroke) return "duotone";
+  const hasDuo    = /(?:fill-opacity|opacity)\s*[:=]\s*["']?0\.\d/i.test(svg);
+  if (hasDuo) return "duotone";
   if (hasFill && !hasStroke) return "filled";
   return "line";
 }
@@ -229,9 +229,10 @@ function DropZone({ onFiles }) {
 
 function StyleBadge({ style }) {
   const cls = {
-    line:    "bg-blue-50 text-blue-700",
-    filled:  "bg-purple-50 text-purple-700",
-    duotone: "bg-amber-50 text-amber-700",
+    line:     "bg-blue-50 text-blue-700",
+    filled:   "bg-purple-50 text-purple-700",
+    duotone:  "bg-amber-50 text-amber-700",
+    duocolor: "bg-teal-50 text-teal-700",
   }[style] ?? "bg-stone-100 text-stone-600";
   return (
     <span className={"px-2 py-0.5 rounded-md text-xs font-medium " + cls}>
@@ -242,7 +243,9 @@ function StyleBadge({ style }) {
 
 // ── ReviewList ─────────────────────────────────────────────────────────────
 
-function ReviewList({ items, onUpdateName, onRemove }) {
+const STYLE_CYCLE = ["line", "filled", "duotone", "duocolor"];
+
+function ReviewList({ items, onUpdateName, onUpdateStyle, onRemove }) {
   return (
     <div>
       {items.map((item) => (
@@ -264,10 +267,17 @@ function ReviewList({ items, onUpdateName, onRemove }) {
             className="flex-1 min-w-0 text-sm bg-transparent border-b border-transparent focus:border-stone-300 focus:outline-none text-stone-700 py-0.5 truncate"
           />
 
-          {/* Style badge */}
-          <div className="flex-none">
+          {/* Style badge — click to cycle */}
+          <button
+            onClick={() => {
+              const next = STYLE_CYCLE[(STYLE_CYCLE.indexOf(item.style) + 1) % STYLE_CYCLE.length];
+              onUpdateStyle(item.id, next);
+            }}
+            title="Click to change style"
+            className="flex-none"
+          >
             <StyleBadge style={item.style} />
-          </div>
+          </button>
 
           {/* File size */}
           <span
@@ -357,6 +367,10 @@ export default function Import() {
 
   function updateName(id, name) {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, name } : i)));
+  }
+
+  function updateStyle(id, style) {
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, style } : i)));
   }
 
   function removeItem(id) {
@@ -517,6 +531,7 @@ export default function Import() {
                   <ReviewList
                     items={items}
                     onUpdateName={updateName}
+                    onUpdateStyle={updateStyle}
                     onRemove={removeItem}
                   />
                 </div>
@@ -639,6 +654,12 @@ export default function Import() {
                   </div>
                 ))}
               </div>
+
+              {summary.skipped > 0 && (
+                <p className="text-xs text-stone-400 text-center">
+                  {summary.skipped} icon{summary.skipped !== 1 ? "s" : ""} skipped — already in your library with identical content.
+                </p>
+              )}
 
               {summary.errors > 0 && (
                 <p className="text-xs text-amber-700">

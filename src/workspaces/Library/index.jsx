@@ -10,7 +10,7 @@ const NEUTRAL_COLOR = "#78716C"; // stone-500, used when no brand selected for p
 
 const EXPORT_SIZES = [24, 50, 100, 150, 200, 250, 500];
 
-const STYLE_OPTS   = ["line", "filled", "duotone"];
+const STYLE_OPTS   = ["line", "filled", "duotone", "duocolor"];
 const SOURCE_OPTS  = ["generated", "uploaded", "imported"];
 
 const mono = { fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" };
@@ -29,7 +29,7 @@ function tileBadgeBrands(icon, filterBrand) {
 }
 
 // ── IconTile ───────────────────────────────────────────────────────────────
-function IconTile({ icon, viewColor, filterBrand, isSelected, onClick }) {
+function IconTile({ icon, viewColor, filterBrand, isSelected, onClick, bulkMode, isChecked }) {
   const badgeBrands = tileBadgeBrands(icon, filterBrand);
 
   return (
@@ -37,9 +37,13 @@ function IconTile({ icon, viewColor, filterBrand, isSelected, onClick }) {
       onClick={onClick}
       className={
         "group relative flex flex-col items-center gap-2 p-2.5 rounded-xl border transition-all " +
-        (isSelected
-          ? "border-stone-900 bg-stone-50 shadow-sm"
-          : "border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm")
+        (bulkMode
+          ? isChecked
+            ? "border-stone-900 bg-stone-50 shadow-sm"
+            : "border-stone-200 bg-white hover:border-stone-300"
+          : isSelected
+            ? "border-stone-900 bg-stone-50 shadow-sm"
+            : "border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm")
       }
     >
       {/* Icon preview */}
@@ -57,6 +61,22 @@ function IconTile({ icon, viewColor, filterBrand, isSelected, onClick }) {
       >
         {icon.name}
       </span>
+
+      {/* Bulk checkbox overlay */}
+      {bulkMode && (
+        <div
+          className={
+            "absolute top-1.5 left-1.5 w-4 h-4 rounded border-2 flex items-center justify-center transition " +
+            (isChecked ? "border-stone-900 bg-stone-900" : "border-stone-300 bg-white")
+          }
+        >
+          {isChecked && (
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12l5 5L20 7" />
+            </svg>
+          )}
+        </div>
+      )}
 
       {/* Availability badges — read-only, fixed corner */}
       {badgeBrands.length > 0 && (
@@ -121,6 +141,7 @@ function TagEditor({ tags, onChange }) {
 // ── DetailPanel ────────────────────────────────────────────────────────────
 function DetailPanel({ icon, viewColor, onClose, onUpdate, onDelete, onAnimate }) {
   const [name, setName]           = useState(icon.name);
+  const [style, setStyle]         = useState(icon.style);
   const [tags, setTags]           = useState(icon.descriptive_tags ?? []);
   const [avail, setAvail]         = useState(icon.brand_availability ?? ALL_BRAND_IDS);
   const [availDirty, setAvailDirty] = useState(false);
@@ -197,6 +218,7 @@ function DetailPanel({ icon, viewColor, onClose, onUpdate, onDelete, onAnimate }
 
   useEffect(() => {
     setName(icon.name);
+    setStyle(icon.style);
     setTags(icon.descriptive_tags ?? []);
     setAvail(icon.brand_availability ?? ALL_BRAND_IDS);
     setAvailDirty(false);
@@ -356,10 +378,35 @@ function DetailPanel({ icon, viewColor, onClose, onUpdate, onDelete, onAnimate }
             )}
           </div>
 
+          {/* Style — editable */}
+          <div>
+            <label className="block text-xs font-medium text-stone-500 uppercase tracking-wide mb-2">
+              Style
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {STYLE_OPTS.map((s) => (
+                <button
+                  key={s}
+                  onClick={async () => {
+                    setStyle(s);
+                    await onUpdate(icon.id, { style: s });
+                  }}
+                  className={
+                    "text-xs font-medium px-3 py-1.5 rounded-lg border transition " +
+                    (style === s
+                      ? "bg-stone-900 text-white border-stone-900"
+                      : "border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700")
+                  }
+                >
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Meta */}
           <div className="rounded-lg border border-stone-100 bg-stone-50 px-3 py-2.5 space-y-1.5">
             {[
-              ["Style",   icon.style],
               ["Stroke",  icon.stroke_width != null ? `${icon.stroke_width}px` : "—"],
               ["Corners", icon.corners ?? "—"],
               ["Source",  icon.source],
@@ -564,6 +611,76 @@ function EmptyGrid({ search, hasFilters }) {
   );
 }
 
+// ── BulkActionBar ──────────────────────────────────────────────────────────
+const STYLE_OPTS_BULK = ["line", "filled", "duotone", "duocolor"];
+
+function BulkActionBar({ count, totalFiltered, onSelectAll, onClearAll, onBulkStyle, saving, progress, error, onExit }) {
+  const progressLabel = saving && progress.total > 0
+    ? `Saving ${progress.done}/${progress.total}…`
+    : saving ? "Saving…" : null;
+
+  return (
+    <div className="flex-none border-t border-stone-200 bg-white">
+      {error && (
+        <div className="px-5 py-2 bg-red-50 border-b border-red-100">
+          <p className="text-xs text-red-700">{error}</p>
+        </div>
+      )}
+      <div className="px-5 py-3 flex items-center gap-3 flex-wrap">
+        <span className="text-sm font-semibold text-stone-800 tabular-nums">
+          {count} selected
+        </span>
+        <button
+          onClick={onSelectAll}
+          disabled={saving}
+          className="text-xs text-stone-500 hover:text-stone-700 underline disabled:opacity-40"
+        >
+          Select all {totalFiltered}
+        </button>
+        {count > 0 && (
+          <button
+            onClick={onClearAll}
+            disabled={saving}
+            className="text-xs text-stone-400 hover:text-stone-600 underline disabled:opacity-40"
+          >
+            Clear
+          </button>
+        )}
+
+        <div className="flex-1" />
+
+        {progressLabel && (
+          <span className="text-xs text-stone-500 tabular-nums">{progressLabel}</span>
+        )}
+
+        {count > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-stone-400">Set style:</span>
+            {STYLE_OPTS_BULK.map((s) => (
+              <button
+                key={s}
+                onClick={() => onBulkStyle(s)}
+                disabled={saving}
+                className="text-xs font-medium px-3 py-1.5 rounded-lg border border-stone-200 hover:border-stone-400 hover:bg-stone-50 transition disabled:opacity-40"
+              >
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <button
+          onClick={onExit}
+          disabled={saving}
+          className="text-xs font-medium px-3 py-1.5 rounded-lg border border-stone-200 text-stone-500 hover:border-stone-300 hover:text-stone-700 transition ml-1 disabled:opacity-40"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Library ───────────────────────────────────────────────────────────
 export default function Library() {
   const navigate = useNavigate();
@@ -578,6 +695,11 @@ export default function Library() {
   const [filterSource, setFilterSource] = useState(null);
   const [viewBrandId,  setViewBrandId]  = useState(null); // null = neutral stone
   const [selectedId,   setSelectedId]   = useState(null);
+  const [bulkMode,     setBulkMode]     = useState(false);
+  const [selectedIds,  setSelectedIds]  = useState(new Set());
+  const [bulkSaving,   setBulkSaving]   = useState(false);
+  const [bulkError,    setBulkError]    = useState(null);
+  const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
 
   const viewColor    = viewBrandId ? (BRANDS.find((b) => b.id === viewBrandId)?.primary ?? NEUTRAL_COLOR) : NEUTRAL_COLOR;
   const selectedIcon = icons.find((i) => i.id === selectedId) ?? null;
@@ -623,6 +745,43 @@ export default function Library() {
     await supabase.from("icons").delete().eq("id", id);
     setIcons((prev) => prev.filter((i) => i.id !== id));
     setSelectedId(null);
+  }
+
+  async function bulkUpdate(patch) {
+    if (!supabase || selectedIds.size === 0) return;
+    setBulkSaving(true);
+    setBulkError(null);
+
+    // Split into chunks of 50 to stay within URL length limits
+    const ids = Array.from(selectedIds);
+    const CHUNK = 50;
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
+    setBulkProgress({ done: 0, total: chunks.length });
+
+    let failError = null;
+    for (let i = 0; i < chunks.length; i++) {
+      const { error } = await supabase.from("icons").update(patch).in("id", chunks[i]);
+      if (error) { failError = error; break; }
+      setBulkProgress({ done: i + 1, total: chunks.length });
+    }
+
+    if (!failError) {
+      setIcons((prev) => prev.map((i) => (selectedIds.has(i.id) ? { ...i, ...patch } : i)));
+      setSelectedIds(new Set());
+      setBulkMode(false);
+    } else {
+      setBulkError(failError.message ?? "Update failed.");
+    }
+    setBulkSaving(false);
+    setBulkProgress({ done: 0, total: 0 });
+  }
+
+  function toggleBulkMode() {
+    setBulkMode((on) => !on);
+    setSelectedIds(new Set());
+    setSelectedId(null);
+    setBulkError(null);
   }
 
   // ── Filtering ────────────────────────────────────────────────────────
@@ -681,7 +840,7 @@ export default function Library() {
   if (loading) {
     return (
       <div className="h-full flex flex-col">
-        <Header search="" onSearch={() => {}} viewBrandId={null} onViewBrand={() => {}} filterBrand={null} onFilterBrand={() => {}} filterStyle={null} onFilterStyle={() => {}} filterSource={null} onFilterSource={() => {}} count={0} activeFilters={0} onClear={() => {}} onRefresh={() => {}} refreshing={false} />
+        <Header search="" onSearch={() => {}} viewBrandId={null} onViewBrand={() => {}} filterBrand={null} onFilterBrand={() => {}} filterStyle={null} onFilterStyle={() => {}} filterSource={null} onFilterSource={() => {}} count={0} activeFilters={0} onClear={() => {}} onRefresh={() => {}} refreshing={false} bulkMode={false} onToggleBulk={() => {}} />
         <div className="flex-1 p-6 grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", alignContent: "start" }}>
           {Array.from({ length: 30 }).map((_, i) => (
             <div key={i} className="aspect-square rounded-xl bg-stone-100 border border-stone-200 animate-pulse" />
@@ -717,34 +876,65 @@ export default function Library() {
         onClear={clearFilters}
         onRefresh={() => fetchIcons(true)}
         refreshing={refreshing}
+        bulkMode={bulkMode}
+        onToggleBulk={toggleBulkMode}
       />
 
       <div className="flex-1 overflow-hidden flex min-h-0">
-        {/* Grid */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {filtered.length === 0 ? (
-            <EmptyGrid search={search} hasFilters={activeFilters > 0} />
-          ) : (
-            <div
-              className="grid gap-2.5"
-              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))" }}
-            >
-              {filtered.map((icon) => (
-                <IconTile
-                  key={icon.id}
-                  icon={icon}
-                  viewColor={viewColor}
-                  filterBrand={filterBrand}
-                  isSelected={icon.id === selectedId}
-                  onClick={() => setSelectedId(icon.id === selectedId ? null : icon.id)}
-                />
-              ))}
-            </div>
+        {/* Grid + bulk action bar */}
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <div className="flex-1 overflow-y-auto p-6">
+            {filtered.length === 0 ? (
+              <EmptyGrid search={search} hasFilters={activeFilters > 0} />
+            ) : (
+              <div
+                className="grid gap-2.5"
+                style={{ gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))" }}
+              >
+                {filtered.map((icon) => (
+                  <IconTile
+                    key={icon.id}
+                    icon={icon}
+                    viewColor={viewColor}
+                    filterBrand={filterBrand}
+                    isSelected={icon.id === selectedId}
+                    bulkMode={bulkMode}
+                    isChecked={selectedIds.has(icon.id)}
+                    onClick={() => {
+                      if (bulkMode) {
+                        setSelectedIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(icon.id)) next.delete(icon.id);
+                          else next.add(icon.id);
+                          return next;
+                        });
+                      } else {
+                        setSelectedId(icon.id === selectedId ? null : icon.id);
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {bulkMode && (
+            <BulkActionBar
+              count={selectedIds.size}
+              totalFiltered={filtered.length}
+              onSelectAll={() => setSelectedIds(new Set(filtered.map((i) => i.id)))}
+              onClearAll={() => setSelectedIds(new Set())}
+              onBulkStyle={(style) => bulkUpdate({ style })}
+              saving={bulkSaving}
+              progress={bulkProgress}
+              error={bulkError}
+              onExit={toggleBulkMode}
+            />
           )}
         </div>
 
-        {/* Detail panel — intentional navigation, not a tooltip */}
-        {selectedIcon && (
+        {/* Detail panel — hidden in bulk mode */}
+        {!bulkMode && selectedIcon && (
           <div className="w-80 flex-none overflow-hidden">
             <DetailPanel
               icon={selectedIcon}
@@ -774,6 +964,7 @@ function Header({
   filterSource, onFilterSource,
   count, activeFilters, onClear,
   onRefresh, refreshing,
+  bulkMode, onToggleBulk,
 }) {
   return (
     <div className="flex-none border-b border-stone-200 bg-white">
@@ -820,6 +1011,22 @@ function Header({
             <path d="M21 3v5h-5" />
             <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
             <path d="M8 16H3v5" />
+          </svg>
+        </button>
+
+        <button
+          onClick={onToggleBulk}
+          title={bulkMode ? "Exit bulk select" : "Bulk select icons"}
+          className={
+            "w-7 h-7 flex items-center justify-center rounded-lg transition flex-none " +
+            (bulkMode
+              ? "bg-stone-900 text-white"
+              : "text-stone-400 hover:text-stone-700 hover:bg-stone-100")
+          }
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 11 12 14 22 4" />
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
           </svg>
         </button>
       </div>
